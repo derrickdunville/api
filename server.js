@@ -7,7 +7,7 @@ var express = require('express'),
     session = require('client-sessions');
 
 mongoose.Promise = global.Promise;
-mongoose.connect('mongodb://localhost/ascend_trading');
+mongoose.connect('mongodb://ascendroot:4sc3ndR00t@ds151048.mlab.com:51048/heroku_c41mdm0l');
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
