@@ -1,4 +1,4 @@
-# ascend-node-api
+# ascend-api
 Ascend Trading Node API - Nodejs, Mongo, SocketIO
 
 ## About

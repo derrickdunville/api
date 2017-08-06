@@ -4,10 +4,14 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "preinstall": "apidoc -i api/ -o apidoc/",
+    "prebuild": "apidoc -i api/ -o apidoc/",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "engines": {
+    "node": "~7.0.0",
+    "npm": "~3.10.8"
+  },
+  "author": "Ascend Trading Devlopment",
   "license": "ISC",
   "dependencies": {
     "accesscontrol": "^1.5.2",
