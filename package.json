@@ -2,7 +2,7 @@
   "name": "ascend-api",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
     "prebuild": "apidoc -i api/ -o apidoc/",
     "test": "echo \"Error: no test specified\" && exit 1"
