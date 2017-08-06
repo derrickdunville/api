@@ -1,0 +1,33 @@
+{
+  "name": "ascend-node-api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "preinstall": "apidoc -i api/ -o apidoc/",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "accesscontrol": "^1.5.2",
+    "apidoc": "^0.17.6",
+    "body-parser": "^1.17.2",
+    "client-sessions": "^0.8.0",
+    "express": "^4.15.3",
+    "express-jwt": "^5.3.0",
+    "jsonwebtoken": "^7.4.2",
+    "lodash": "^4.17.4",
+    "mongoose": "^4.11.5",
+    "path": "^0.12.7"
+  },
+  "apidoc": {
+    "name": "Ascend Trading API",
+    "version": "0.1.0",
+    "description": "apiDoc for Ascend Trading",
+    "apidoc": {
+      "title": "Ascend Trading API",
+      "url": "https://api.ascendtrading.net"
+    }
+  }
+}
