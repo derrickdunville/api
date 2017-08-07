@@ -55,27 +55,25 @@ app.use(function (err, req, res, next) {
 });
 
 
-var db;
-
 //mongoose.Promise = global.Promise;
 
 console.log("MONGODB_URI: " + process.env.MONGODB_URI);
-mongoose.connect(process.env.MONGODB_URI);
-// mongodb.MongoClient.connect(process.env.MONGODB_URI, function (err, database) {
-//     if (err) {
-//         console.log(err);
-//         process.exit(1);
-//     }
-//
-//     // Save database object from the callback for reuse.
-//     db = database;
-//     console.log("Database connection ready");
-//
-//     // Initialize the app.
-//     var server = app.listen(process.env.PORT || 3001, function () {
-//         var port = server.address().port;
-//         console.log("API now running on port", port);
-//     });
-// });
+//mongodb.MongoClient.connect(process.env.MONGODB_URI, function (err, database) {
+mongoose.connect(process.env.MONGODB_URI, function (err, res) {
+    if (err) {
+        console.log(err);
+        process.exit(1);
+    }
 
-app.listen(3001);
+    // Save database object from the callback for reuse.
+    console.log("Database connection ready");
+
+    // Initialize the app.
+    var server = app.listen(process.env.PORT || 3001, function () {
+        var port = server.address().port;
+        console.log("API now running on port", port);
+    });
+});
+
+//mongoose.connect(process.env.MONGODB_URI);
+//app.listen(3001);
