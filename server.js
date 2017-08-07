@@ -23,28 +23,6 @@ app.use('/', express.static('public'));
 app.use('/apidocs', express.static('apidoc'));
 
 
-var db;
-
-//mongoose.Promise = global.Promise;
-//mongoose.connect('mongodb://localhost/ascend_trading');
-console.log("MONGODB_URI: " + process.env.MONGODB_URI);
-mongodb.MongoClient.connect(process.env.MONGODB_URI, function (err, database) {
-    if (err) {
-        console.log(err);
-        process.exit(1);
-    }
-
-    // Save database object from the callback for reuse.
-    db = database;
-    console.log("Database connection ready");
-
-    // Initialize the app.
-    var server = app.listen(process.env.PORT || 3001, function () {
-        var port = server.address().port;
-        console.log("API now running on port", port);
-    });
-});
-
 // Session middleware
 app.use(function(req, res, next) {
     if (req.session && req.session.user) {
@@ -75,3 +53,29 @@ app.use(function (err, req, res, next) {
         res.status(500).send(err)
     }
 });
+
+
+var db;
+
+//mongoose.Promise = global.Promise;
+
+console.log("MONGODB_URI: " + process.env.MONGODB_URI);
+mongoose.connect(process.env.MONGODB_URI);
+// mongodb.MongoClient.connect(process.env.MONGODB_URI, function (err, database) {
+//     if (err) {
+//         console.log(err);
+//         process.exit(1);
+//     }
+//
+//     // Save database object from the callback for reuse.
+//     db = database;
+//     console.log("Database connection ready");
+//
+//     // Initialize the app.
+//     var server = app.listen(process.env.PORT || 3001, function () {
+//         var port = server.address().port;
+//         console.log("API now running on port", port);
+//     });
+// });
+
+app.listen(3001);

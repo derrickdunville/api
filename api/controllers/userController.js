@@ -5,7 +5,7 @@ var mongoose = require('mongoose'),
     _       = require('lodash'),
     jwt     = require('jsonwebtoken'),
     ejwt    = require('express-jwt'),
-    User    = mongodb.model('Users'),
+    User    = mongoose.model('Users'),
     AccessControl      = require('accesscontrol');
 
 // var accessList = [
