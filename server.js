@@ -5,40 +5,52 @@ var express = require('express'),
     mongodb = require('mongodb'),
     User = require('./api/models/userModel'),
     bodyParser = require('body-parser'),
-    session = require('client-sessions');
+    session = require('express-session');
+    passport = require('passport');
+    LocalStrategy = require('passport-local').Strategy;
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-app.use(session({
-    cookieName: 'session',
-    secret: 'ascend_trading_session', //TODO: make this stronger
-    duration: 30*60*1000,
-    activateDuration: 5*60*1000,
-}));
+// app.use(session({
+//     cookieName: 'session',
+//     secret: 'ascend_trading_session', //TODO: make this stronger
+//     duration: 30*60*1000,
+//     activateDuration: 5*60*1000,
+// }));
 
-var routes = require('./api/routes/userRoutes');
-routes(app);
+app.use(passport.initialize());
+app.use(passport.session());
+app.use(session(sessionOpts = {
+    saveUninitialized: true, // saved new sessions
+    resave: false, // do not automatically write to the session store
+    secret: 'secret',
+    cookie : { httpOnly: true, maxAge: 2419200000 } // configure when sessions expires
+}))
+
+var userRoutes = require('./api/routes/userRoutes');
+//var routes = require('./api/routes/userRoutes');
+userRoutes(app);
 
 app.use('/', express.static('public'));
 app.use('/apidocs', express.static('apidoc'));
 
 
-// Session middleware
-app.use(function(req, res, next) {
-    if (req.session && req.session.user) {
-        User.findOne({ username: req.session.user.username }, function(err, user) {
-            if (user) {
-                req.user = user;
-                delete req.user.password; // delete the password from the session
-                req.session.user = user;  //refresh the session value
-            }
-            // finishing processing the middleware and run the route
-            next();
-        });
-    } else {
-        next();
-    }
-});
+// // Session middleware
+// app.use(function(req, res, next) {
+//     if (req.session && req.session.user) {
+//         User.findOne({ username: req.session.user.username }, function(err, user) {
+//             if (user) {
+//                 req.user = user;
+//                 delete req.user.password; // delete the password from the session
+//                 req.session.user = user;  //refresh the session value
+//             }
+//             // finishing processing the middleware and run the route
+//             next();
+//         });
+//     } else {
+//         next();
+//     }
+// });
 
 // catch 404 and forward to error handler
 app.use(function(req, res) {

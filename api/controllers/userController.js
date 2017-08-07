@@ -5,8 +5,8 @@ var mongoose = require('mongoose'),
     _       = require('lodash'),
     jwt     = require('jsonwebtoken'),
     ejwt    = require('express-jwt'),
-    User    = mongoose.model('Users'),
-    AccessControl      = require('accesscontrol');
+    User    = mongoose.model('User'),
+    AccessControl = require('accesscontrol');
 
 // var accessList = [
 //   //create user is unprotected
@@ -41,13 +41,6 @@ var grants = {
 
 var ac = new AccessControl(grants);
 
-var jwtCheck = ejwt({
-    secret: config.secretKey
-});
-
-function createToken(user) {
-    return jwt.sign(_.omit(user, 'password'), config.secretKey, { expiresIn: 60*60*5 });
-}
 
 function checkSession(req){
     if(req.session && req.session.user){
@@ -70,7 +63,6 @@ exports.loginUser = function(req, res){
                 } else {
                     req.session.user = user;
                     var token = {
-                        id_token: createToken(user),
                         user: user
                     };
                     res.status(201).send(token);
@@ -87,10 +79,9 @@ exports.listUsers = function(req, res) {
             User.find({}, function(err, users) {
                 if (err)
                     res.status(401).send(err);
-                console.log(users);
-                console.log(permission.attributes);
-                console.log(permission.filter(users));
-                res.status(201).json(users);
+                // filter the result set
+                var filteredUsers = permission.filter(JSON.parse(JSON.stringify(users)));
+                res.status(201).json(filteredUsers);
             });
         } else {
             res.status(400).send("You are not authorized to view all users");

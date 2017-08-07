@@ -59,9 +59,9 @@ module.exports = function(app) {
          */
         .delete(userController.deleteUser);
 
-    app.route('/users/login')
+    app.route('/login')
         /**
-         * @api {post} /users Login
+         * @api {post} /login Login
          * @apiGroup Auth
          * @apiParam {JSON} User, example: { username: "AscendUser", password: "password"}
          *

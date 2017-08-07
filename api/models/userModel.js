@@ -1,8 +1,9 @@
 'use strict';
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
+var bcrypt   = require('bcrypt-nodejs');
 
-var UserSchema = new Schema({
+var userSchema = new Schema({
     username: {
         type: String,
         unique: true,
@@ -29,4 +30,15 @@ var UserSchema = new Schema({
     }
 });
 
-module.exports = mongoose.model('Users', UserSchema);
+// methods ======================
+// generating a hash
+userSchema.methods.generateHash = function(password) {
+    return bcrypt.hashSync(password, bcrypt.genSaltSync(8), null);
+};
+
+// checking if password is valid
+userSchema.methods.validPassword = function(password) {
+    return bcrypt.compareSync(password, this.password);
+};
+
+module.exports = mongoose.model('User', userSchema);
