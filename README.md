@@ -9,3 +9,9 @@ nodejs
 mongodb
 SocketIO
 Heroku
+
+## MongoDB
+For Development
+```SET MONGODB_URI=mongodb://localhost/ascend_trading```
+For Heroku
+```SET MONGODB_URI=mongodb://ascendroot:4sc3ndR00t@ds151048.mlab.com:51048/heroku_c41mdm0l```

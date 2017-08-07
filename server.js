@@ -2,12 +2,10 @@ var express = require('express'),
     app = express(),
     port = process.env.PORT || 3000,
     mongoose = require('mongoose'),
+    mongodb = require('mongodb'),
     User = require('./api/models/userModel'),
     bodyParser = require('body-parser'),
     session = require('client-sessions');
-
-mongoose.Promise = global.Promise;
-mongoose.connect('mongodb://ascendroot:4sc3ndR00t@ds151048.mlab.com:51048/heroku_c41mdm0l');
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -23,7 +21,29 @@ routes(app);
 
 app.use('/', express.static('public'));
 app.use('/apidocs', express.static('apidoc'));
-app.listen(port);
+
+
+var db;
+
+//mongoose.Promise = global.Promise;
+//mongoose.connect('mongodb://localhost/ascend_trading');
+console.log("MONGODB_URI: " + process.env.MONGODB_URI);
+mongodb.MongoClient.connect(process.env.MONGODB_URI, function (err, database) {
+    if (err) {
+        console.log(err);
+        process.exit(1);
+    }
+
+    // Save database object from the callback for reuse.
+    db = database;
+    console.log("Database connection ready");
+
+    // Initialize the app.
+    var server = app.listen(process.env.PORT || 3001, function () {
+        var port = server.address().port;
+        console.log("API now running on port", port);
+    });
+});
 
 // Session middleware
 app.use(function(req, res, next) {
@@ -42,7 +62,6 @@ app.use(function(req, res, next) {
     }
 });
 
-console.log('User RESTful API server started on: ' + port);
 // catch 404 and forward to error handler
 app.use(function(req, res) {
     res.status(404).send({url: req.originalUrl + ' not found'})
