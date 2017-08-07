@@ -28,7 +28,7 @@ var db;
 //mongoose.Promise = global.Promise;
 //mongoose.connect('mongodb://localhost/ascend_trading');
 console.log("MONGODB_URI: " + process.env.MONGODB_URI);
-mongoose.connect(process.env.MONGODB_URI, function (err, database) {
+mongodb.MongoClient.connect(process.env.MONGODB_URI, function (err, database) {
     if (err) {
         console.log(err);
         process.exit(1);
