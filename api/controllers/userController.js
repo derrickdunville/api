@@ -1,10 +1,11 @@
 'use strict';
 var mongoose = require('mongoose'),
+    mongodb = require('mongodb'),
     config  = require('../config'),
     _       = require('lodash'),
     jwt     = require('jsonwebtoken'),
     ejwt    = require('express-jwt'),
-    User    = mongoose.model('Users'),
+    User    = mongodb.model('Users'),
     AccessControl      = require('accesscontrol');
 
 // var accessList = [

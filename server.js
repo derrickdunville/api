@@ -1,6 +1,6 @@
 var express = require('express'),
     app = express(),
-    port = process.env.PORT || 3000,
+    port = process.env.PORT || 3001,
     mongoose = require('mongoose'),
     mongodb = require('mongodb'),
     User = require('./api/models/userModel'),
@@ -28,7 +28,7 @@ var db;
 //mongoose.Promise = global.Promise;
 //mongoose.connect('mongodb://localhost/ascend_trading');
 console.log("MONGODB_URI: " + process.env.MONGODB_URI);
-mongodb.MongoClient.connect(process.env.MONGODB_URI, function (err, database) {
+mongoose.connect(process.env.MONGODB_URI, function (err, database) {
     if (err) {
         console.log(err);
         process.exit(1);
