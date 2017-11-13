@@ -21,25 +21,30 @@ For Development
 For Heroku
 ```SET MONGODB_URI=mongodb://ascend_root:4sc3ndR00t@ds151048.mlab.com:51048/heroku_c41mdm0l```
 
-##AccessControl API Docs
-```http://onury.github.io/accesscontrol/?api=ac```
-
-##Heroku
-Heroku is setup with automated deployments for the master branch.
-
-
-## Start the API
-Start the mongodb server
-C:\Program Files\MongoDB\Server\3.4\bin>mongod.exe
-
-Start the node server
-node server.js
-
-Dropping and Recreating MongoDB
+##Dropping and Recreating MongoDB
 mongo //to start the mongodb shell
 show dbs //to list existing databases
 use <dbname> //the <dbname> is the database you'd like to drop
 db //should show <dbname> just to be sure I'm working with the right database
 db.dropDatabase() //will delete the database & return { "dropped" : "<dbname>", "ok" : 1 }
 use ascend_trading
+
+##AccessControl API Docs
+```http://onury.github.io/accesscontrol/?api=ac```
+
+##Heroku
+Heroku is setup with automated deployments for the master branch.
+
+## Start the API
+Start the mongodb server
+C:\Program Files\MongoDB\Server\3.4\bin>mongod.exe
+
+Start the node server
+node server.js or nmp start
+
+## Testing the API
+Run the mocha & chai test scripts
+npm test
+
+
 
