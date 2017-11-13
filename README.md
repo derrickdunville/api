@@ -42,3 +42,4 @@ use <dbname> //the <dbname> is the database you'd like to drop
 db //should show <dbname> just to be sure I'm working with the right database
 db.dropDatabase() //will delete the database & return { "dropped" : "<dbname>", "ok" : 1 }
 use ascend_trading
+
