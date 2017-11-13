@@ -17,9 +17,14 @@ To connect to mongodb on a local environment you will need to have a mongodb ser
 need to set your MONGODB_URI environment variable.
 
 For Development
-```SET MONGODB_URI=mongodb://localhost/ascend_trading```
+```
+SET MONGODB_URI=mongodb://localhost/ascend_trading
+```
+
 For Heroku
-```SET MONGODB_URI=mongodb://ascend_root:4sc3ndR00t@ds151048.mlab.com:51048/heroku_c41mdm0l```
+```
+SET MONGODB_URI=mongodb://ascend_root:4sc3ndR00t@ds151048.mlab.com:51048/heroku_c41mdm0l
+```
 
 ## Dropping and Recreating MongoDB
 ```
@@ -32,21 +37,23 @@ use ascend_trading
 ```
 
 ## AccessControl API Docs
-```http://onury.github.io/accesscontrol/?api=ac```
+```
+http://onury.github.io/accesscontrol/?api=ac
+```
 
 ## Heroku
 Heroku is setup with automated deployments for the master branch.
 
 ## Start the API
 Start the mongodb server
-C:\Program Files\MongoDB\Server\3.4\bin>mongod.exe
+```C:\Program Files\MongoDB\Server\3.4\bin>mongod.exe```
 
 Start the node server
-node server.js or nmp start
+```node server.js or nmp start```
 
 ## Testing the API
 Run the mocha & chai test scripts
-npm test
+```npm test```
 
 
 
