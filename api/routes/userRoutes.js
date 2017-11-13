@@ -1,13 +1,8 @@
 'use strict';
 module.exports = function(app) {
-    var userController = require('../controllers/userController'),
-        config  = require('../config'),
-        jwt     = require('jsonwebtoken'),
-        ejwt    = require('express-jwt');
+    let userController = require('../controllers/userController'),
+        config  = require('../config')
 
-    // var jwtCheck = ejwt({
-    //   secret: config.secretKey
-    // });
     // users Routes
     app.route('/users')
         /**
@@ -18,7 +13,7 @@ module.exports = function(app) {
          *
          * @apiError Unauthorized user is unauthorized
          */
-        .get(userController.listUsers)
+        .get(userController.ensureAuthorized, userController.listUsers)
 
         /**
          * @api {post} /users Create New User
@@ -59,9 +54,9 @@ module.exports = function(app) {
          */
         .delete(userController.deleteUser);
 
-    app.route('/users/login')
+    app.route('/login')
         /**
-         * @api {post} /users Login
+         * @api {post} /login Login
          * @apiGroup Auth
          * @apiParam {JSON} User, example: { username: "AscendUser", password: "password"}
          *

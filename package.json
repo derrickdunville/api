@@ -1,12 +1,12 @@
 {
   "name": "ascend-api",
-  "version": "1.0.0",
+  "version": "2017.1.0",
   "description": "",
   "main": "server.js",
   "scripts": {
     "postinstall": "apidoc -i api/ -o apidoc/",
     "start": "node server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha --timeout 10000"
   },
   "engines": {
     "node": "~7.0.0",
@@ -17,23 +17,35 @@
   "dependencies": {
     "accesscontrol": "^1.5.2",
     "apidoc": "^0.17.6",
+    "bcrypt-nodejs": "0.0.3",
+    "bluebird": "^3.5.1",
     "body-parser": "^1.17.2",
     "client-sessions": "^0.8.0",
+    "cors": "^2.8.4",
     "express": "^4.15.3",
     "express-jwt": "^5.3.0",
+    "express-session": "^1.15.5",
     "jsonwebtoken": "^7.4.2",
     "lodash": "^4.17.4",
     "mongodb": "^2.2.30",
-    "mongoose": "^4.11.5",
+    "mongoose": "^4.10.8",
+    "morgan": "^1.9.0",
+    "passport": "^0.3.2",
+    "passport-local": "^1.0.0",
     "path": "^0.12.7"
   },
   "apidoc": {
     "name": "Ascend Trading API",
-    "version": "0.1.0",
+    "version": "2017.1.0",
     "description": "apiDoc for Ascend Trading",
     "apidoc": {
       "title": "Ascend Trading API",
       "url": "https://api.ascendtrading.net"
     }
+  },
+  "devDependencies": {
+    "chai": "^4.1.2",
+    "chai-http": "^3.0.0",
+    "mocha": "^4.0.1"
   }
 }

@@ -1,3 +1,7 @@
 # dependencies
 /node_modules
 /apidoc
+
+.idea/misc.xml
+.idea/watcherTasks.xml
+.idea/workspace.xml
