@@ -36,6 +36,28 @@ db.dropDatabase() //will delete the database & return { "dropped" : "<dbname>", 
 use ascend_trading
 ```
 
+### Ubuntu
+```
+Step 1: Remove lock file.
+sudo rm /var/lib/mongodb/mongod.lock
+
+Step 2: Repair mongodb.
+sudo mongod --repair
+
+Step 3: start mongodb.
+sudo start mongod
+or
+sudo service mongod start
+
+Step 4: Check status of mongodb.
+sudo status mongod
+or   
+sudo service mongod status
+
+Step 5: Start mongo console.
+mongo
+```
+
 ## AccessControl API Docs
 ```
 http://onury.github.io/accesscontrol/?api=ac
@@ -54,6 +76,3 @@ Start the node server
 ## Testing the API
 Run the mocha & chai test scripts
 ```npm test```
-
-
-

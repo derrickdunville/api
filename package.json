@@ -17,11 +17,13 @@
   "dependencies": {
     "accesscontrol": "^1.5.2",
     "apidoc": "^0.17.6",
+    "async-waterfall": "^0.1.5",
     "bcrypt-nodejs": "0.0.3",
     "bluebird": "^3.5.1",
     "body-parser": "^1.17.2",
     "client-sessions": "^0.8.0",
     "cors": "^2.8.4",
+    "crypto": "^1.0.1",
     "express": "^4.15.3",
     "express-jwt": "^5.3.0",
     "express-session": "^1.15.5",
@@ -30,6 +32,7 @@
     "mongodb": "^2.2.30",
     "mongoose": "^4.10.8",
     "morgan": "^1.9.0",
+    "nodemailer": "^4.4.0",
     "passport": "^0.3.2",
     "passport-local": "^1.0.0",
     "path": "^0.12.7"

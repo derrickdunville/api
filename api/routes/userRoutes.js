@@ -8,9 +8,7 @@ module.exports = function(app) {
         /**
          * @api {get} /users List All Users
          * @apiGroup User
-         *
          * @apiSuccess {JSON} List of all users
-         *
          * @apiError Unauthorized user is unauthorized
          */
         .get(userController.ensureAuthorized, userController.listUsers)
@@ -20,7 +18,6 @@ module.exports = function(app) {
          * @apiGroup User
          * @apiParam {JSON} user json object
          * @apiSuccess {JSON} List of all users
-         *
          * @apiError Unauthorized user is unauthorized
          */
         .post(userController.createUser);
@@ -31,7 +28,6 @@ module.exports = function(app) {
          * @apiGroup User
          * @apiParam {Integer} userId Id of the desired user
          * @apiSuccess {JSON} User Object
-         *
          * @apiError Unauthorized user is unauthorized
          */
         .get(userController.readUser)
@@ -40,7 +36,6 @@ module.exports = function(app) {
          * @apiGroup User
          * @apiParam {Integer} userId Id of the desired user
          * @apiSuccess {JSON} User Object
-         *
          * @apiError Unauthorized user is unauthorized
          */
         .put(userController.updateUser)
@@ -49,7 +44,6 @@ module.exports = function(app) {
          * @apiGroup User
          * @apiParam {Integer} userId Id of the desired user
          * @apiSuccess {JSON} User Object
-         *
          * @apiError Unauthorized user is unauthorized
          */
         .delete(userController.deleteUser);
@@ -59,11 +53,36 @@ module.exports = function(app) {
          * @api {post} /login Login
          * @apiGroup Auth
          * @apiParam {JSON} User, example: { username: "AscendUser", password: "password"}
-         *
          * @apiSuccess {JSON} User Object
-         *
          * @apiError Unauthorized user is unauthorized
          */
         .post(userController.loginUser);
+
+    app.route('/forgot-password')
+        /**
+         * @api {post} /forgot-password Forgot Password
+         * @apiGroup Auth
+         * @apiParam {JSON} Email, example: { email: "contact@ascendtrading.net"}
+         * @apiSuccess {JSON} Err or Msg
+         */
+        .post(userController.forgotPassword);
+
+    app.route('/reset-password')
+        /**
+         * @api {post} /reset-password Reset Password
+         * @apiGroup Auth
+         * @apiParam {JSON} Reset Password, example: { resetToken: "jaksdbauicbsjakd", newPassword: "newpassword"}
+         * @apiSuccess {JSON} User Object
+         */
+        .post(userController.resetPassword);
+
+    app.route('/verify-password-reset-token')
+        /**
+         * @api {post} /verify-password-reset-token Verify Password Reset Token
+         * @apiGroup Auth
+         * @apiParam {JSON} Reset Password, example: { resetToken: "jaksdbauicbsjakd", newPassword: "newpassword"}
+         * @apiSuccess {JSON} Err or Msg
+         */
+        .post(userController.verifyPasswordResetToken);
 
 };

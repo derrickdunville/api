@@ -30,7 +30,16 @@ let userSchema = new Schema({
         default: ['everyone']
     },
     token: {
-        type: String
+        type: String,
+        default: null
+    },
+    passwordResetToken: {
+        type: String,
+        default: null
+    },
+    passwordResetExpires: {
+        type: Date,
+        default: null
     }
 });
 
