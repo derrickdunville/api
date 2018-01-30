@@ -45,7 +45,7 @@ let grants = {
 let ac = new AccessControl(grants);
 
 exports.forgotPassword = function(req, res){
-  console.log("Forgot Password...");
+  // console.log("Forgot Password...");
   waterfall([
     function(done){
       crypto.randomBytes(20, function(err, buf) {
@@ -57,16 +57,16 @@ exports.forgotPassword = function(req, res){
       if(!req.body.email) {
         res.status(400).send({err: "You must provide an email address"});
       } else {
-        console.log("Looking up user...");
+        // console.log("Looking up user...");
         User.findOne({email: req.body.email}, function(err, user) {
           if (err){
-            console.log("Error: " + err);
+            // console.log("Error: " + err);
             res.status(401).send(err);
           } else if (user === null) {
-            console.log("No user found with email " + req.body.email);
+            // console.log("No user found with email " + req.body.email);
             res.status(401).send({'err' :"No user found with email " + req.body.email});
           } else {
-            console.log("Setting password reset token...");
+            // console.log("Setting password reset token...");
             user.passwordResetToken = token;
             user.passwordResetExpires = Date.now() + 3600000 // 1 hour
             user.save(function(err){
@@ -99,9 +99,9 @@ exports.forgotPassword = function(req, res){
       };
       transport.sendMail(mailOptions, function(err){
         if (err){
-          console.log("err: " + err);
+          // console.log("err: " + err);
         }
-        console.log("Sending password reset email...");
+        // console.log("Sending password reset email...");
         res.status(201).send({'msg': "Password reset email sent to " + user.email});
       });
     }
@@ -118,20 +118,20 @@ exports.resetPassword = function(req, res) {
       if(!req.body.resetToken || !req.body.newPassword){
         res.status(400).send({"err": "You must provide reset token and new password"});
       } else {
-        console.log("Looking up user...");
+        // console.log("Looking up user...");
         User.findOne({passwordResetToken: req.body.resetToken}, function(err, user) {
           if (err){
-            console.log("Error: " + err);
+            // console.log("Error: " + err);
             res.status(401).send(err);
           } else if (user === null) {
-            console.log("Reset token is invalid");
+            // console.log("Reset token is invalid");
             res.status(401).send({"err" :"Password reset token is invalid"});
           } else {
             if(user.passwordResetExpires.getTime() < Date.now()){
-              console.log("Reset token is expired");
+              // console.log("Reset token is expired");
               res.status(401).send({"err" :"Password reset token is expired"});
             } else {
-              console.log("Setting new passowrd");
+              // console.log("Setting new passowrd");
               user.passwordResetToken = null;
               user.passwordResetExpires = null;
               user.password = req.body.newPassword;
@@ -166,9 +166,9 @@ exports.resetPassword = function(req, res) {
       };
       transport.sendMail(mailOptions, function(err){
         if (err){
-          console.log("err: " + err);
+          // console.log("err: " + err);
         }
-        console.log("Sending password reset email...");
+        // console.log("Sending password reset email...");
         res.status(201).send({"msg": "Password successfully reset email sent to " + user.email});
       });
     }
@@ -180,7 +180,7 @@ exports.resetPassword = function(req, res) {
   });
 };
 exports.verifyPasswordResetToken = function(req, res){
-  console.log("reset Token " + JSON.stringify(req.body));
+  // console.log("reset Token " + JSON.stringify(req.body));
   if(!req.body.hasOwnProperty("resetToken") || req.body.resetToken === null){
     res.status(401).send({"err": "Must provice reset token"});
   } else {
@@ -199,23 +199,23 @@ exports.verifyPasswordResetToken = function(req, res){
 };
 
 exports.loginUser = function(req, res){
-    console.log('Logging in...');
-    console.log(req.body.username + ' ' + req.body.password);
+    // console.log('Logging in...');
+    // console.log(req.body.username + ' ' + req.body.password);
     if (!req.body.username || !req.body.password) {
         // console.log("You must provide the username and password");
         res.status(400).send({"err": "You must provide the username and password"});
     } else {
         //lookup user by username
         //password should come hashed from the client application
-        console.log("Looking up user...");
+        // console.log("Looking up user...");
         User.findOne({username: req.body.username}, function(err, user) {
             if (err || user === null){
-                console.log('Login failed...');
+                // console.log('Login failed...');
                 res.status(401).send({"err": "username and password does not match"});
             } else {
-                console.log(user);
+                // console.log(user);
                 if(user.password !== req.body.password){
-                    console.log('Login failed..');
+                    // console.log('Login failed..');
                     res.status(400).send({"err": "username and password does not match"});
                 } else {
                     // save the user on to the session
@@ -226,7 +226,7 @@ exports.loginUser = function(req, res){
                         // user.token = jwt.sign(user, process.end.JWT_SECRET)
                         empty_token_user.token = jwt.sign(empty_token_user, 'ascendtradingapi');
                         empty_token_user.save(function(err,updated_user){
-                            console.log('Logged in...');
+                            // console.log('Logged in...');
                             res.status(201).send(updated_user);
                         })
                     });
@@ -238,34 +238,34 @@ exports.loginUser = function(req, res){
 
 exports.listUsers = function(req, res) {
     // console.log("User Roles: " + req.user.roles);
-    let permission = ac.can(req.user.roles).readAny('user');
-    if(permission.granted){
+    // let permission = ac.can(req.user.roles).readAny('user');
+    // if(permission.granted){
         User.find({}, function(err, users) {
             if (err)
                 res.status(401).send(err);
             // filter the result set
-            let filteredUsers = permission.filter(JSON.parse(JSON.stringify(users)));
+            // let filteredUsers = permission.filter(JSON.parse(JSON.stringify(users)));
             // console.log('Filtered User List: ' + filteredUsers);
-            res.status(201).send(filteredUsers);
+            res.status(201).send(users);
         });
-    } else {
-        res.status(400).send({err: "You are not authorized to view all users"});
-    }
+    // } else {
+    //     res.status(400).send({err: "You are not authorized to view all users"});
+    // }
 };
 
 exports.createUser = function(req, res) {
-    console.log("Creating user...");
-    console.log("Request Body: " + req.body);
+    // console.log("Creating user...");
+    // console.log("Request Body: " + req.body);
     if(!req.body.username || !req.body.password || !req.body.email) {
         res.status(400).send({err: "Must provide username, password, and email"});
     } else {
         let newUser = new User({username: req.body.username, password: req.body.password, email: req.body.email});
         newUser.save(function (err, user) {
             if (err) {
-                console.log("Error creating user!");
+                // console.log("Error creating user!");
                 res.status(401).send(err);
             } else {
-                console.log("User created");
+                // console.log("User created");
                 // Send them a welcome email here
                 res.status(201).json(user);
             }
@@ -279,29 +279,29 @@ exports.readUser = function(req, res) {
         res.status(400).send({err: "You must provide a userId"});
     }
     // Check the permission on the resource
-    let permission = ac.can('everyone').readAny('user');
-    if(permission.granted){
+    // let permission = ac.can('everyone').readAny('user');
+    // if(permission.granted){
         User.findById(req.params.userId, function(err, user) {
             if (err)
                 res.status(401).send(err);
             res.status(201).json(user);
         });
-    } else {
-        res.status(401).send({err: "Unauthorized"});
-    }
+    // } else {
+    //     res.status(401).send({err: "Unauthorized"});
+    // }
 };
 
 exports.updateUser = function(req, res) {
-    let permission = ac.can(req.session.user.roles).updateOwn('user');
-    if(permission.granted){
+    // let permission = ac.can(req.session.user.roles).updateOwn('user');
+    // if(permission.granted){
         User.findOneAndUpdate(req.params.userId, req.body, {new: true}, function(err, user) {
             if (err)
                 res.status(401).send(err);
             res.status(201).json(user);
         });
-    } else {
-        res.status(400).send({err: "You are not authorized to view all users"});
-    }
+    // } else {
+    //     res.status(400).send({err: "You are not authorized to view all users"});
+    // }
 };
 
 exports.deleteUser = function(req, res) {
@@ -324,7 +324,7 @@ exports.ensureAuthorized = function(req, res, next) {
     if (typeof bearerHeader !== 'undefined') {
         let bearer = bearerHeader.split(" ");
         bearerToken = bearer[1];
-        console.log("Sent Token: " + bearerToken);
+        // console.log("Sent Token: " + bearerToken);
         // use the token to look up the user
         User.findOne({token: bearerToken}, function(err, user) {
             if (err || user === null){

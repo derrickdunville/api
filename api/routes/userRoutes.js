@@ -11,7 +11,8 @@ module.exports = function(app) {
          * @apiSuccess {JSON} List of all users
          * @apiError Unauthorized user is unauthorized
          */
-        .get(userController.ensureAuthorized, userController.listUsers)
+        // .get(userController.ensureAuthorized, userController.listUsers)
+        .get(userController.listUsers)
 
         /**
          * @api {post} /users Create New User

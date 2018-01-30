@@ -25,7 +25,8 @@ describe('Users', () => {
         it('it should POST a new user', (done) => {
             let newUser = {
                 username: "Tester",
-                password: "test123"
+                password: "test123",
+                email: "tester@ascendtrading.net"
             };
             chai.request(server)
                 .post('/users')
@@ -57,7 +58,7 @@ describe('Users', () => {
                 .end((err, res) => {
                     res.should.have.status(400);
                     res.body.should.be.a("object");
-                    res.body.should.have.property("err").eql("Must provide username and password");
+                    res.body.should.have.property("err").eql("Must provide username, password, and email");
                     done();
                 });
         });

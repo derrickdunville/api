@@ -26,7 +26,7 @@
 14 verbose stack     at maybeClose (internal/child_process.js:885:16)
 14 verbose stack     at Process.ChildProcess._handle.onexit (internal/child_process.js:226:5)
 15 verbose pkgid ascend-api@2017.1.0
-16 verbose cwd /home/dev/developer/ascend-api
+16 verbose cwd /home/dev/developer/ascend-api/seed
 17 error Linux 4.2.0-27-generic
 18 error argv "/home/dev/.nvm/versions/node/v7.4.0/bin/node" "/home/dev/.nvm/versions/node/v7.4.0/bin/npm" "run" "start"
 19 error node v7.4.0

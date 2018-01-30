@@ -4,43 +4,23 @@ let Schema = mongoose.Schema;
 let bcrypt = require('bcrypt-nodejs');
 
 let userSchema = new Schema({
-    username: {
-        type: String,
-        unique: true,
-        Required: 'Your desired username'
-    },
-    password: {
-        type: String,
-        Required: 'Must provide password'
-    },
-    email: {
-        type: String,
-        unique: true,
-        Required: 'Must provide email address'
-    },
-    created_date: {
-        type: Date,
-        default: Date.now
-    },
-    roles: {
-        type: [{
-            type: String,
-            enum: ['super', 'admin', 'member', 'everyone']
-        }],
-        default: ['everyone']
-    },
-    token: {
-        type: String,
-        default: null
-    },
-    passwordResetToken: {
-        type: String,
-        default: null
-    },
-    passwordResetExpires: {
-        type: Date,
-        default: null
-    }
+  username: { type: String, unique: true, required: true },
+  password: { type: String, required: true },
+  email: { type: String, unique: true, required: true},
+  created_date: { type: Date, default: Date.now },
+  token: { type: String, default: null },
+  passwordResetToken: { type: String, default: null },
+  passwordResetExpires: { type: Date, default: null },
+  roles: {
+    type: [{
+      type: String,
+      enum: ['super', 'admin', 'member', 'everyone']
+    }],
+    default: ['everyone']
+  },
+  stripe_cus_id: { type: String, default: null },
+  transactions: [{ type: Schema.Types.ObjectId, ref: 'Transaction' }],
+  subscriptions: [{ type: Schema.Types.ObjectId, ref: 'Subscription' }]
 });
 
 // methods ======================

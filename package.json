@@ -31,11 +31,13 @@
     "lodash": "^4.17.4",
     "mongodb": "^2.2.30",
     "mongoose": "^4.10.8",
+    "mongoose-seed": "^0.4.1",
     "morgan": "^1.9.0",
     "nodemailer": "^4.4.0",
     "passport": "^0.3.2",
     "passport-local": "^1.0.0",
-    "path": "^0.12.7"
+    "path": "^0.12.7",
+    "stripe": "^5.4.0"
   },
   "apidoc": {
     "name": "Ascend Trading API",
