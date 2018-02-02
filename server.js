@@ -83,7 +83,7 @@ mongoose.connect(mongo, function (err, res) {
     console.log("Database connection ready")
 
     // Initialize the app.
-    let server = app.listen(process.env.PORT || 3001, function () {
+    let server = app.listen(process.env.PORT || 3000, function () {
         let port = server.address().port
         console.log("API now running on port", port)
     })

@@ -180,7 +180,7 @@ exports.resetPassword = function(req, res) {
   });
 };
 exports.verifyPasswordResetToken = function(req, res){
-  // console.log("reset Token " + JSON.stringify(req.body));
+  console.log("reset Token " + JSON.stringify(req.body));
   if(!req.body.hasOwnProperty("resetToken") || req.body.resetToken === null){
     res.status(401).send({"err": "Must provice reset token"});
   } else {
