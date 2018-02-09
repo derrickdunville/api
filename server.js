@@ -20,7 +20,8 @@ let express = require('express'),
     userRoutes = require('./api/routes/userRoutes'),
     productRoutes = require('./api/routes/productRoutes'),
     subscriptionRoutes = require('./api/routes/subscriptionRoutes'),
-    transactionRoutes = require('./api/routes/transactionRoutes')
+    transactionRoutes = require('./api/routes/transactionRoutes'),
+    oauthRoutes = require('./api/routes/oauthRoutes');
 
 
 app.use(bodyParser.urlencoded({ extended: true }))
@@ -32,26 +33,13 @@ app.use(function(req, res, next) {
     next()
 })
 
-// don't show the log when it is test
-// if(config.util.getEnv('NODE_ENV') !== 'test') {
-//     // use morgan to log requests to the console
-//     app.use(morgan('combined'));
-// }
-
-// app.use(passport.initialize());
-// app.use(passport.session());
-// app.use(session(sessionOpts = {
-//     saveUninitialized: true, // saved new sessions
-//     resave: false, // do not automatically write to the session store
-//     secret: 'secret',
-//     cookie : { httpOnly: true, maxAge: 2419200000 } // configure when sessions expires
-// }))
 app.use(cors())
 
 userRoutes(app)
 productRoutes(app)
 subscriptionRoutes(app)
 transactionRoutes(app)
+oauthRoutes(app)
 
 app.use('/', express.static('public'))
 app.use('/apidocs', express.static('apidoc'))
@@ -61,14 +49,14 @@ app.use(function(req, res) {
     res.status(404).send({url: req.originalUrl + ' not found'})
 })
 
-app.use(function (err, req, res, next) {
-    console.log(err.toString())
-    if (err.name === 'UnauthorizedError') {
-        res.status(401).send('Invalid Token...')
-    } else {
-        res.status(500).send(err)
-    }
-})
+// app.use(function (err, req, res, next) {
+//     console.log(err.toString())
+//     if (err.name === 'UnauthorizedError') {
+//         res.status(401).send('Invalid Token...')
+//     } else {
+//         res.status(500).send(err)
+//     }
+// })
 
 
 let mongo = process.env.MONGODB_URI || 'localhost:27017/ascend_trading'
@@ -88,5 +76,6 @@ mongoose.connect(mongo, function (err, res) {
         console.log("API now running on port", port)
     })
 })
+
 
 module.exports = app // for testing

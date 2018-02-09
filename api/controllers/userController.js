@@ -305,14 +305,9 @@ exports.updateUser = function(req, res) {
 };
 
 exports.deleteUser = function(req, res) {
-    user.remove({
-        _id: req.params.userId
-    }, function(err, user) {
-        if (err)
-            res.status(401).send(err);
-        res.status(201).json({message: 'user successfully deleted'});
-    });
+
 };
+
 
 // Authorization Handler
 // look up the user with the jwt token and push the users role list

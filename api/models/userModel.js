@@ -11,6 +11,14 @@ let userSchema = new Schema({
   token: { type: String, default: null },
   passwordResetToken: { type: String, default: null },
   passwordResetExpires: { type: Date, default: null },
+  discordOAuthToken: { type: String, default: null },
+  discordOAuthExpires: { type: Date, default: null },
+  discordAccessToken: { type: String, default: null },
+  discordAccessTokenExpires: { type: Date, default: null },
+  discordRefreshToken: { type: String, default: null },
+  discordUsername: { type: String, default: null },
+  discordDiscriminator: { type: String, default: null },
+  discordId: { type: String, default: null },
   roles: {
     type: [{
       type: String,
