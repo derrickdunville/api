@@ -7,8 +7,8 @@ let mongoose  = require('mongoose'),
     crypto    = require('crypto')
 
 
-const CLIENT_ID = process.env.CLIENT_ID;
-const CLIENT_SECRET = process.env.CLIENT_SECRET;
+const CLIENT_ID = process.env.DISCORD_CLIENT_ID;
+const CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
 const btoa = require('btoa');
 const { catchAsync } = require('../utils');
 const redirect = encodeURIComponent('https://b8832d97.ngrok.io/oauth/discord/callback');
@@ -78,7 +78,7 @@ exports.discordCallback = catchAsync(async (req, res) => {
     })
   // console.log(access_response)
   const access_json = await access_response.json()
-  
+
   User.findOne({discordOAuthToken: state}, function(err, user){
     if(err || user === null){
       res.status(401).send({err: "Invalid State - Error: " + err})
