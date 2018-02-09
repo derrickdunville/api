@@ -9,8 +9,8 @@
     "test": "mocha --timeout 10000"
   },
   "engines": {
-    "node": "~7.0.0",
-    "npm": "~3.10.8"
+    "node": "~7.10.1",
+    "npm": "~4.2.0"
   },
   "author": "Ascend Trading Devlopment",
   "license": "ISC",
