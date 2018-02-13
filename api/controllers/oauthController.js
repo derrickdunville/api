@@ -9,9 +9,11 @@ let mongoose  = require('mongoose'),
 
 const CLIENT_ID = process.env.DISCORD_CLIENT_ID;
 const CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
+const DISCORD_CALLBACK = process.env.DISCORD_CALLBACK;
+const REDIRECT_URI = process.env.REDIRECT_URI;
 const btoa = require('btoa');
 const { catchAsync } = require('../utils');
-const redirect = encodeURIComponent('https://b8832d97.ngrok.io/oauth/discord/callback');
+const redirect = encodeURIComponent(DISCORD_CALLBACK);
 const fetch = require('node-fetch');
 
 exports.createOAuthState = function(req, res) {
@@ -49,7 +51,6 @@ exports.createOAuthState = function(req, res) {
 }
 
 exports.discordCallback = catchAsync(async (req, res) => {
-
   if (!req.query.code) throw new Error('NoCodeProvided')
   // console.log(CLIENT_ID)
   const code = req.query.code
@@ -96,9 +97,52 @@ exports.discordCallback = catchAsync(async (req, res) => {
       user.discordId = access_json.id
 
       user.save(function(err){
-        res.redirect(`http://localhost:8080/ascend`);
+        res.redirect(REDIRECT_URI);
         // res.status(201).send({oauth_state: user._id + state})
       })
     }
   })
+})
+
+exports.revokeOAuth = catchAsync(async (req, res) => {
+  console.log("Req Body:" + req.body)
+  let discordTokenToRekove
+  if(req.body.token === null){
+    res.status(401).send({err: "Please provide API token"})
+  }
+  User.findOne({token: req.body.token}, function(err, user){
+    if(err || user === null){
+      res.status(401).send({err: "Invalid Token - Error: " + err})
+    } else {
+      let discordTokenToRekove = user.discordAccessToken
+      user.discordOAuthToken = null
+      user.discordOAuthExpires = null
+      user.discordUsername = null
+      user.discordDiscriminator = null
+      user.discordAccessToken = null
+      user.discordAccessTokenExpires = null
+      user.discordRefreshToken = null
+      user.discordId = null
+      user.save(function(err){
+      })
+    }
+  })
+
+  const response = await fetch(`https://discordapp.com/api/oauth2/token/revoke?token=${discordTokenToRekove}`,
+    {
+      method: 'POST',
+    })
+  if(response.status === 200){
+    console.log("Successfully revoked Discord OAuth")
+    User.findOne({token: req.body.token}, function(err, user){
+      if(err || user === null){
+        res.status(401).send({err: "Invalid Token - Error: " + err})
+      } else {
+        res.status(200).send({user: user, msg: "Successfully revoked Discord OAuth"})
+      }
+    })
+  } else {
+    const json = await response.json()
+    res.status(401).send({err: json.error_description})
+  }
 })

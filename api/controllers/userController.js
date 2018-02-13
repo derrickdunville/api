@@ -30,14 +30,46 @@ let grants = {
         user: {
             "read:any": ["*"],
             "delete:any": ["*"],
-            "update:any": ["*"]
+            "update:any": ["*",
+              '!token',
+              '!passwordResetToken',
+              '!passwordResetExpires',
+              '!discordOAuthToken',
+              '!discordOAuthExpires',
+              '!discordAccessToken',
+              '!discordAccessTokenExpires',
+              '!discordRefreshToken',
+              '!discordUsername',
+              '!discordDiscriminator',
+              '!discordId',
+              '!stripe_cus_id',
+              '!transactions',
+              '!subscriptions'
+            ]
         }
     },
     everyone: {
         user: {
             "read:any": ['*', '!password', '!token', '!email'],
             "delete:own": ['*'],
-            "update:own": ['*']
+            "update:own": ['*',
+              '!created_date',
+              '!token',
+              '!passwordResetToken',
+              '!passwordResetExpires',
+              '!discordOAuthToken',
+              '!discordOAuthExpires',
+              '!discordAccessToken',
+              '!discordAccessTokenExpires',
+              '!discordRefreshToken',
+              '!discordUsername',
+              '!discordDiscriminator',
+              '!discordId',
+              '!roles',
+              '!stripe_cus_id',
+              '!transactions',
+              '!subscriptions'
+            ]
         }
     }
 };
@@ -200,39 +232,52 @@ exports.verifyPasswordResetToken = function(req, res){
 
 exports.loginUser = function(req, res){
     // console.log('Logging in...');
-    // console.log(req.body.username + ' ' + req.body.password);
-    if (!req.body.username || !req.body.password) {
-        // console.log("You must provide the username and password");
-        res.status(400).send({"err": "You must provide the username and password"});
+    console.log(req.body.token);
+    if (req.body.token !== undefined) {
+      console.log('Logging in with token');
+      User.findOne({token: req.body.token}, function(err, user) {
+          if (err || user === null){
+            // console.log('Login failed...');
+            res.status(401).send({"err": "username and password does not match"});
+          } else {
+            res.status(201).send({user: user})
+          }
+        })
     } else {
-        //lookup user by username
-        //password should come hashed from the client application
-        // console.log("Looking up user...");
-        User.findOne({username: req.body.username}, function(err, user) {
-            if (err || user === null){
-                // console.log('Login failed...');
-                res.status(401).send({"err": "username and password does not match"});
-            } else {
-                // console.log(user);
-                if(user.password !== req.body.password){
-                    // console.log('Login failed..');
-                    res.status(400).send({"err": "username and password does not match"});
-                } else {
-                    // save the user on to the session
-                    //req.session.user = user;
-                    user.token = '';
-                    user.save(function(err, empty_token_user){
-                        // create the jwt and save it to the user
-                        // user.token = jwt.sign(user, process.end.JWT_SECRET)
-                        empty_token_user.token = jwt.sign(empty_token_user, 'ascendtradingapi');
-                        empty_token_user.save(function(err,updated_user){
-                            // console.log('Logged in...');
-                            res.status(201).send(updated_user);
-                        })
-                    });
-                }
-            }
-        });
+      console.log('Logging in with creds');
+      if (!req.body.username || !req.body.password) {
+          // console.log("You must provide the username and password");
+          res.status(400).send({"err": "You must provide the username and password"});
+      } else {
+          //lookup user by username
+          //password should come hashed from the client application
+          // console.log("Looking up user...");
+          User.findOne({username: req.body.username}, function(err, user) {
+              if (err || user === null){
+                  // console.log('Login failed...');
+                  res.status(401).send({"err": "username and password does not match"});
+              } else {
+                  // console.log(user);
+                  if(user.password !== req.body.password){
+                      // console.log('Login failed..');
+                      res.status(400).send({"err": "username and password does not match"});
+                  } else {
+                      // save the user on to the session
+                      //req.session.user = user;
+                      user.token = '';
+                      user.save(function(err, empty_token_user){
+                          // create the jwt and save it to the user
+                          // user.token = jwt.sign(user, process.end.JWT_SECRET)
+                          empty_token_user.token = jwt.sign(empty_token_user, 'ascendtradingapi');
+                          empty_token_user.save(function(err,updated_user){
+                              // console.log('Logged in...');
+                              res.status(201).send({user: updated_user});
+                          })
+                      });
+                  }
+              }
+          });
+      }
     }
 };
 
@@ -292,16 +337,69 @@ exports.readUser = function(req, res) {
 };
 
 exports.updateUser = function(req, res) {
-    // let permission = ac.can(req.session.user.roles).updateOwn('user');
-    // if(permission.granted){
-        User.findOneAndUpdate(req.params.userId, req.body, {new: true}, function(err, user) {
+
+  console.log("Updating User: " + req.params.userId)
+  console.log("username: " + JSON.stringify(req.body.username))
+
+  // First check if the current users roles can update "ANY" user
+  let updatePermission = ac.can(req.user.roles).updateAny('user')
+  let readPermission = ac.can(req.user.roles).readAny('user')
+  // If not granted, check if the current role can update "OWN" user
+  if(updatePermission.granted === false){
+    // Determine if the target user is "owned" by the current user.
+    if(req.user._id === req.params.userId){         // updating own
+      updatePermission = ac.can(req.user.roles).updateOwn('user')
+      readPermission = ac.can(req.user.roles).readOwn('user')
+    }
+  }
+  if(updatePermission.granted){
+    // Updating own - must provide correct password
+    console.log("req.user._id: " + req.user._id)
+    console.log("req.params.userId: " + req.params.userId)
+    console.log(req.user._id == req.params.userId)
+    if(req.user._id == req.params.userId){
+      console.log("Updaing Own User")
+      if(req.body.password === undefined){
+        res.status(401).send({err: "Must provide password"})
+      } else {
+        if(req.user.password == req.body.password){
+          if(req.body.newPassword !== undefined){
+            req.body.password = req.body.newPassword
+            console.log("Updaing password")
+          } else {
+            delete req.body.password
+          }
+          let filteredUpdates = updatePermission.filter(req.body)
+          console.log("Filtered User: " + JSON.stringify(filteredUpdates))
+          User.findOneAndUpdate({_id: req.params.userId}, filteredUpdates, {new: true}, function(err, user) {
             if (err)
-                res.status(401).send(err);
-            res.status(201).json(user);
-        });
-    // } else {
-    //     res.status(400).send({err: "You are not authorized to view all users"});
-    // }
+                res.status(401).send(err)
+            console.log("Updated User: " + JSON.stringify(user))
+            let filteredUser = readPermission.filter(JSON.parse(JSON.stringify(user)))
+            // console.log("Filtered User: " + JSON.stringify(filteredUser))
+            res.status(201).send({msg: "Successfully updated user", user: filteredUser});
+          });
+        } else {
+          res.status(401).send({err: "Invalid password"})
+        }
+      }
+    // Updating any - can skip password
+    } else {
+      console.log("Updating Any User")
+      let filteredUpdates = updatePermission.filter(req.body)
+      // console.log("Filtered User: " + JSON.stringify(filteredUpdates))
+      User.findOneAndUpdate({_id: req.params.userId}, filteredUpdates, {new: true}, function(err, user) {
+        if (err)
+            res.status(401).send({err: err})
+        // console.log("Updated User: " + JSON.stringify(user))
+        let filteredUser = readPermission.filter(JSON.parse(JSON.stringify(user)))
+        // console.log("Filtered User: " + JSON.stringify(filteredUser))
+        res.status(201).send({msg: "Successfully updated user", user: filteredUser});
+      });
+    }
+  } else {
+      res.status(400).send({err: "You are not authorized to update users"})
+  }
 };
 
 exports.deleteUser = function(req, res) {
@@ -313,23 +411,23 @@ exports.deleteUser = function(req, res) {
 // look up the user with the jwt token and push the users role list
 // onto the request for authorization at the endpoint
 exports.ensureAuthorized = function(req, res, next) {
-    // console.log('ensureAuthorized...');
+    console.log('ensureAuthorized...');
     let bearerToken;
     let bearerHeader = req.headers["authorization"];
     if (typeof bearerHeader !== 'undefined') {
         let bearer = bearerHeader.split(" ");
         bearerToken = bearer[1];
-        // console.log("Sent Token: " + bearerToken);
+        console.log("Sent Token: " + bearerToken);
         // use the token to look up the user
         User.findOne({token: bearerToken}, function(err, user) {
             if (err || user === null){
-                // console.log('Token lookup failed...');
+                console.log('Token lookup failed...');
                 res.status(401).send({err: "Invalid Token - Error: " + err});
             } else {
                 // User was found with the token
                 // console.log(user);
                 req.user = user;
-                // console.log('Valid Token - Authorized');
+                console.log('Valid Token - Authorized');
                 next();
             }
         });

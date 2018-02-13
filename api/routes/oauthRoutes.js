@@ -24,4 +24,15 @@ module.exports = function(app) {
          */
         // .get(userController.ensureAuthorized, userController.listUsers)
         .get(oauthController.discordCallback)
+
+    // users Routes
+    app.route('/oauth/discord/revoke')
+        /**
+         * @api {post} /oauth/discord/state Revokes a discord oauth access token
+         * @apiGroup OAuth
+         * @apiSuccess {JSON} OAuth State Token
+         * @apiError Unauthorized user is unauthorized
+         */
+        // .get(userController.ensureAuthorized, userController.listUsers)
+        .post(oauthController.revokeOAuth)
 };

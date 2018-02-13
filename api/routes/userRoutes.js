@@ -39,7 +39,7 @@ module.exports = function(app) {
          * @apiSuccess {JSON} User Object
          * @apiError Unauthorized user is unauthorized
          */
-        .put(userController.updateUser)
+        .put(userController.ensureAuthorized, userController.updateUser)
         /**
          * @api {delete} /users/:userId Delete User
          * @apiGroup User
