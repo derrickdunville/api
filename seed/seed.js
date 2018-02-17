@@ -41,15 +41,15 @@ var data = [
       }
     ]
   },
-  {
-    'model': 'Product',
-    'documents': [
-      {
-        '_id': '5a6b9d88ac9e591424063482',
-        'name': 'Diamond',
-        'amount': '99.99',
-        'description' : 'Diamond Membership has access to...'
-      }
-    ]
-  }
+  // {
+  //   'model': 'Product',
+  //   'documents': [
+  //     {
+  //       '_id': '5a6b9d88ac9e591424063482',
+  //       'name': 'Diamond',
+  //       'amount': '99.99',
+  //       'description' : 'Diamond Membership has access to...'
+  //     }
+  //   ]
+  // }
 ]

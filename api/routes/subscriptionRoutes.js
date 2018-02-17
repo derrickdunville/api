@@ -1,7 +1,7 @@
 'use strict';
 module.exports = function(app) {
-
-    let subscriptionController  = require('../controllers/subscriptionController'),
+    let authService = require('../helpers/authService'),
+        subscriptionController  = require('../controllers/subscriptionController'),
         config                = require('../config')
 
     // subscriptions Routes
@@ -22,7 +22,7 @@ module.exports = function(app) {
          * @apiSuccess {JSON} Subscriptions object
          * @apiError Unauthorized user is unauthorized
          */
-        .post(subscriptionController.createSubscription)
+        .post(authService.ensureAuthorized, subscriptionController.createSubscription)
 
     app.route('/subscriptions/:subscriptionId')
         /**

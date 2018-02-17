@@ -74,10 +74,10 @@ exports.createProduct = function(req, res) {
           console.log("Saving product...");
           newProduct.save(function (err, product) {
               if (err) {
-                  // console.log("Error creating product!");
+                  console.log("Error creating product!");
                   res.status(401).send(err)
               } else {
-                  // console.log("Product created" + product);
+                  console.log("Product created" + product);
                   res.status(201).json(product)
               }
           })
