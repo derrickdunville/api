@@ -1,6 +1,7 @@
 'use strict';
 module.exports = function(app) {
-    let userController = require('../controllers/userController'),
+    let authService = require('../helpers/authService'),
+        userController = require('../controllers/userController'),
         config  = require('../config')
 
     // users Routes
@@ -39,7 +40,7 @@ module.exports = function(app) {
          * @apiSuccess {JSON} User Object
          * @apiError Unauthorized user is unauthorized
          */
-        .put(userController.ensureAuthorized, userController.updateUser)
+        .put(authService.ensureAuthorized, userController.updateUser)
         /**
          * @api {delete} /users/:userId Delete User
          * @apiGroup User

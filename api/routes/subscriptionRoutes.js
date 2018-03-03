@@ -32,7 +32,7 @@ module.exports = function(app) {
          * @apiSuccess {JSON} Subscription Object
          * @apiError Unauthorized user is unauthorized
          */
-        .get(subscriptionController.readSubscription)
+        .get(authService.ensureAuthorized, subscriptionController.readSubscription)
         /**
          * @api {put} /subscriptions/:subscriptionId Update Subscription
          * @apiGroup Subscription
@@ -40,7 +40,7 @@ module.exports = function(app) {
          * @apiSuccess {JSON} Subscription Object
          * @apiError Unauthorized user is unauthorized
          */
-        .put(subscriptionController.updateSubscription)
+        .put(authService.ensureAuthorized, subscriptionController.updateSubscription)
         /**
          * @api {delete} /subscriptions/:subscriptionId Delete Subscription
          * @apiGroup Subscription
@@ -48,6 +48,6 @@ module.exports = function(app) {
          * @apiSuccess {JSON} Subscription Object
          * @apiError Unauthorized user is unauthorized
          */
-        .delete(subscriptionController.deleteSubscription);
+        .delete(authService.ensureAuthorized, subscriptionController.deleteSubscription)
 
 };

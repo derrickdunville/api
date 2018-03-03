@@ -84,8 +84,6 @@ exports.discordCallback = catchAsync(async (req, res) => {
     if(err || user === null){
       res.status(401).send({err: "Invalid State - Error: " + err})
     } else {
-      // Get identity from discord
-
       console.log(access_json)
       user.discordOAuthToken = null
       user.discordOAuthExpires = null // 1 hour
@@ -97,6 +95,7 @@ exports.discordCallback = catchAsync(async (req, res) => {
       user.discordId = access_json.id
 
       user.save(function(err){
+        req.app.io.sockets.emit('auth-updated', '')
         res.redirect(REDIRECT_URI);
         // res.status(201).send({oauth_state: user._id + state})
       })

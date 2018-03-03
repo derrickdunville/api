@@ -232,15 +232,18 @@ exports.verifyPasswordResetToken = function(req, res){
 
 exports.loginUser = function(req, res){
     // console.log('Logging in...');
-    console.log(req.body.token);
+    // console.log(req.body);
     if (req.body.token !== undefined) {
       console.log('Logging in with token');
-      User.findOne({token: req.body.token}, function(err, user) {
+      User.findOne({token: req.body.token})
+      .populate({path: 'subscriptions', populate: {path: 'product'}, match: { status: "active" }})
+      .populate({path: 'transactions', populate: {path: 'product'}})
+      .exec(function(err, user) {
           if (err || user === null){
             // console.log('Login failed...');
             res.status(401).send({"err": "username and password does not match"});
           } else {
-            res.status(201).send({user: user})
+            res.status(201).send(user)
           }
         })
     } else {
@@ -252,7 +255,10 @@ exports.loginUser = function(req, res){
           //lookup user by username
           //password should come hashed from the client application
           // console.log("Looking up user...");
-          User.findOne({username: req.body.username}, function(err, user) {
+          User.findOne({username: req.body.username})
+          .populate({path: 'subscriptions', populate: {path: 'product'}, match: { status: "active" }})
+          .populate({path: 'transactions', populate: {path: 'product'}})
+          .exec(function(err, user) {
               if (err || user === null){
                   // console.log('Login failed...');
                   res.status(401).send({"err": "username and password does not match"});
@@ -271,7 +277,7 @@ exports.loginUser = function(req, res){
                           empty_token_user.token = jwt.sign(empty_token_user, 'ascendtradingapi');
                           empty_token_user.save(function(err,updated_user){
                               // console.log('Logged in...');
-                              res.status(201).send({user: updated_user});
+                              res.status(201).send(updated_user);
                           })
                       });
                   }
@@ -338,7 +344,7 @@ exports.readUser = function(req, res) {
 
 exports.updateUser = function(req, res) {
 
-  console.log("Updating User: " + req.params.userId)
+  // console.log("Updating User: " + req.params.userId)
   console.log("username: " + JSON.stringify(req.body.username))
 
   // First check if the current users roles can update "ANY" user
@@ -354,9 +360,9 @@ exports.updateUser = function(req, res) {
   }
   if(updatePermission.granted){
     // Updating own - must provide correct password
-    console.log("req.user._id: " + req.user._id)
-    console.log("req.params.userId: " + req.params.userId)
-    console.log(req.user._id == req.params.userId)
+    // console.log("req.user._id: " + req.user._id)
+    // console.log("req.params.userId: " + req.params.userId)
+    // console.log(req.user._id == req.params.userId)
     if(req.user._id == req.params.userId){
       console.log("Updaing Own User")
       if(req.body.password === undefined){
@@ -370,13 +376,14 @@ exports.updateUser = function(req, res) {
             delete req.body.password
           }
           let filteredUpdates = updatePermission.filter(req.body)
-          console.log("Filtered User: " + JSON.stringify(filteredUpdates))
+          // console.log("Filtered User: " + JSON.stringify(filteredUpdates))
           User.findOneAndUpdate({_id: req.params.userId}, filteredUpdates, {new: true}, function(err, user) {
             if (err)
                 res.status(401).send(err)
-            console.log("Updated User: " + JSON.stringify(user))
+            // console.log("Updated User: " + JSON.stringify(user))
             let filteredUser = readPermission.filter(JSON.parse(JSON.stringify(user)))
             // console.log("Filtered User: " + JSON.stringify(filteredUser))
+            req.app.io.sockets.emit('user-updated', filteredUser)
             res.status(201).send({msg: "Successfully updated user", user: filteredUser});
           });
         } else {
@@ -394,6 +401,7 @@ exports.updateUser = function(req, res) {
         // console.log("Updated User: " + JSON.stringify(user))
         let filteredUser = readPermission.filter(JSON.parse(JSON.stringify(user)))
         // console.log("Filtered User: " + JSON.stringify(filteredUser))
+        req.app.io.sockets.emit('user-updated', filteredUser)
         res.status(201).send({msg: "Successfully updated user", user: filteredUser});
       });
     }
@@ -403,35 +411,4 @@ exports.updateUser = function(req, res) {
 };
 
 exports.deleteUser = function(req, res) {
-
 };
-
-
-// Authorization Handler
-// look up the user with the jwt token and push the users role list
-// onto the request for authorization at the endpoint
-exports.ensureAuthorized = function(req, res, next) {
-    console.log('ensureAuthorized...');
-    let bearerToken;
-    let bearerHeader = req.headers["authorization"];
-    if (typeof bearerHeader !== 'undefined') {
-        let bearer = bearerHeader.split(" ");
-        bearerToken = bearer[1];
-        console.log("Sent Token: " + bearerToken);
-        // use the token to look up the user
-        User.findOne({token: bearerToken}, function(err, user) {
-            if (err || user === null){
-                console.log('Token lookup failed...');
-                res.status(401).send({err: "Invalid Token - Error: " + err});
-            } else {
-                // User was found with the token
-                // console.log(user);
-                req.user = user;
-                console.log('Valid Token - Authorized');
-                next();
-            }
-        });
-    } else {
-        res.status(403).send({err: "Provide Token"});
-    }
-}

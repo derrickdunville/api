@@ -60,7 +60,7 @@ exports.createProduct = function(req, res) {
   if (newProduct.interval !== 'one-time') {
     console.log("Creating stripe plan...");
     stripe.plans.create({
-      amount: newProduct.amount * 100,
+      amount: Math.round(newProduct.amount * 100),
       interval: newProduct.interval,
       name: newProduct.name,
       currency: newProduct.currency

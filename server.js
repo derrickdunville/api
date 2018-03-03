@@ -21,7 +21,10 @@ let express = require('express'),
     productRoutes = require('./api/routes/productRoutes'),
     subscriptionRoutes = require('./api/routes/subscriptionRoutes'),
     transactionRoutes = require('./api/routes/transactionRoutes'),
-    oauthRoutes = require('./api/routes/oauthRoutes');
+    oauthRoutes = require('./api/routes/oauthRoutes'),
+    stripeRoutes = require('./api/routes/stripeRoutes'),
+    socketRoutes = require('./api/routes/socketRoutes'),
+    SocketIo = require('socket.io')
 
 
 app.use(bodyParser.urlencoded({ extended: true }))
@@ -40,6 +43,8 @@ productRoutes(app)
 subscriptionRoutes(app)
 transactionRoutes(app)
 oauthRoutes(app)
+stripeRoutes(app)
+socketRoutes(app)
 
 app.use('/', express.static('public'))
 app.use('/apidocs', express.static('apidoc'))
@@ -66,16 +71,20 @@ mongoose.connect(mongo, function (err, res) {
         console.log(err)
         process.exit(1)
     }
-
     // Save database object from the callback for reuse.
     console.log("Database connection ready")
-
     // Initialize the app.
-    let server = app.listen(process.env.PORT || 3000, function () {
+    const server = app.listen(process.env.PORT || 3000, function () {
         let port = server.address().port
         console.log("API now running on port", port)
     })
+
+    const io = new SocketIo(server, {path: '/ws'})
+    const socketEvents = require('./api/socketEvents')(io);
+
+    app.io = io // Allows us to access io in the controllers
 })
+
 
 
 module.exports = app // for testing

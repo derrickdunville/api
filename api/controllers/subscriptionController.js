@@ -2,8 +2,6 @@ let mongoose      = require('mongoose'),
     mongodb       = require('mongodb'),
     config        = require('../config'),
     _             = require('lodash'),
-    jwt           = require('jsonwebtoken'),
-    ejwt          = require('express-jwt'),
     Subscription    = mongoose.model('Subscription'),
     User          = mongoose.model('User'),
     Product          = mongoose.model('Product'),
@@ -12,23 +10,25 @@ let mongoose      = require('mongoose'),
     stripe        = require("stripe")("sk_test_K3Ol21vL7fiVAUDcp8MnOAYT")
 
 
-//
-// let grants = {
-//     admin: {
-//         subscription: {
-//             "read:any": ["*"],
-//             "delete:any": ["*"],
-//             "update:any": ["*"]
-//         }
-//     },
-//     everyone: {
-//         subscription: {
-//             "read:any": ['*', '!password', '!token', '!email'],
-//             "delete:own": ['*'],
-//             "update:own": ['*']
-//         }
-//     }
-// };
+
+let grants = {
+    admin: {
+        subscription: {
+            "read:any": ["*"],
+            "delete:any": ["*"],
+            "update:any": ["*"]
+        }
+    },
+    everyone: {
+        subscription: {
+            "read:any": ['*'],
+            "delete:own": ['*'],
+            "update:own": ['*']
+        }
+    }
+};
+
+let ac = new AccessControl(grants)
 
 exports.listSubscriptions = function(req, res) {
   // console.log("User Roles: " + req.user.roles);
@@ -115,8 +115,8 @@ exports.createSubscription = function(req, res) {
           } else {
             console.log("Stripe Subscription: " + JSON.stringify(stripe_subscription))
             let newSubscription = new Subscription({
-              user_id: user._id,
-              product_id: product._id,
+              user: user._id,
+              product: product._id,
               subscription_id: stripe_subscription.id,
               price: product.price,
               total: product.price,
@@ -124,6 +124,8 @@ exports.createSubscription = function(req, res) {
               cc_last4: req.body.stripe_token.card.last4,
               cc_exp_month: req.body.stripe_token.card.exp_month,
               cc_exp_year: req.body.stripe_token.card.exp_year,
+              current_period_start: new Date(stripe_subscription.current_period_start * 1000),
+              current_period_end: new Date(stripe_subscription.current_period_end * 1000),
               status: "active"
             })
             newSubscription.save(function (err, subscription) {
@@ -174,21 +176,82 @@ exports.readSubscription = function(req, res) {
 
 exports.updateSubscription = function(req, res) {
 
-  // // Check the params
-  // if(!req.params.subscriptionId){
-  //     res.status(400).send({err: "You must provide a subscriptionId"});
-  // }
-  // // Check the permission on the resource
-  // let permission = ac.can(req.session.user.roles).updateOwn('subscription');
-  // if(permission.granted){
-  Subscription.findOneAndUpdate(req.params.subscriptionId, req.body, {new: true}, function(err, subscription) {
-      if (err)
-          res.status(401).send(err)
-      res.status(201).json(subscription)
-  });
-  // } else {
-  //     res.status(400).send({err: "You are not authorized to update subscriptions"});
-  // }
+  // Check the params
+  waterfall([
+    function(done){
+      console.log("Updating subscription")
+      if(!req.params.subscriptionId){
+          res.status(400).send({err: "You must provide a subscriptionId"});
+      } else {
+        // Lookup the user associated to the target subscription
+        Subscription.findOne({_id: req.params.subscriptionId})
+        .populate('user')
+        .exec(function(err, subscription) {
+            if (err) {
+                res.status(401).send(err)
+            } else {
+              console.log("Target subscription found")
+              done(err, subscription)
+            }
+        })
+      }
+    },
+    function(subscription, done){
+      // // Check the permission on the resource
+
+      // First check if the current users roles can update "ANY" subscription
+      let updatePermission = ac.can(req.user.roles).updateAny('subscription')
+      let readPermission = ac.can(req.user.roles).readAny('subscription')
+      // If not granted, check if the current role can update "OWN" subscription
+      if(updatePermission.granted === false){
+        // Determine if the target subscription is "owned" by the current user.
+        if(subscription.user._id === req.user._id){         // updating own
+          updatePermission = ac.can(req.user.roles).updateOwn('subscription')
+          readPermission = ac.can(req.user.roles).readOwn('subscription')
+        }
+      }
+      if(updatePermission.granted){
+        // Updating subscription granted
+        console.log(req.body)
+        // for subscriptions a user can only update thier own subscription and they
+        // can only update the cancel_at_period_end option to ture but cannot undo it
+        if(req.body.subscription.cancel_at_period_end === true){
+          stripe.subscriptions.del(
+            req.body.subscription.subscription_id, {
+              at_period_end: true
+            },
+            function(err, confirmation) {
+              if (err) {
+                console.log("Canceling Subscription Error: " + err)
+                res.status(401).send(err)
+              } else {
+                console.log(confirmation)
+                let filteredUpdates = updatePermission.filter(req.body.subscription)
+                console.log("Filtered subscription: " + JSON.stringify(filteredUpdates))
+                Subscription.findOneAndUpdate({_id: req.params.subscriptionId}, filteredUpdates, {new: true}, function(err, subscription) {
+                  if (err)
+                      res.status(401).send(err)
+                  console.log("Updated subscription: " + JSON.stringify(subscription))
+                  let filteredSubscription = readPermission.filter(JSON.parse(JSON.stringify(subscription)))
+                  // console.log("Filtered User: " + JSON.stringify(filteredUser))
+                  res.status(201).send({msg: "Successfully updated subscription", subscription: filteredSubscription});
+                });
+              }
+            }
+          );
+        } else {
+            res.status(400).send({err: "You are doing something you shouldn't!"});
+        }
+      } else {
+          res.status(400).send({err: "You are not authorized to update users"})
+      }
+    }
+  ],
+  function(err){
+    if(err){
+      res.status(401).send(err)
+    }
+  })
 };
 
 exports.deleteSubscription = function(req, res) {

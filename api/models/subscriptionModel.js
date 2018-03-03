@@ -4,10 +4,10 @@ var Schema = mongoose.Schema
 var bcrypt   = require('bcrypt-nodejs')
 
 var subscriptionSchema = new Schema({
-  user_id: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-  product_id: { type: Schema.Types.ObjectId, ref: 'Subscription', required: true },
-  coupon_id: { type: Number, default: null },
-  subscription_id : { type: String },
+  user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  product: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
+  coupon: { type: Number, default: null },
+  subscription_id: { type: String },
   price: { type: Number, required: true, default: 0.00 },
   total: { type: Number, default: 0.00 },
   tax_amount: { type: Number, default: 0.00 },
@@ -27,7 +27,15 @@ var subscriptionSchema = new Schema({
   trial: { type: Boolean, default: false },
   trial_days: { type: Number, default: 1},
   trial_amount: { type: Number, default: 0.00},
-  status: { type: String, default: null },
+  status: {
+    type: String,
+    enum: ['trialing', 'active', 'past-due', 'canceled'],
+    default: 'active'
+  },
+  current_period_start: { type: Date, required: true, default: Date.now() },
+  current_period_end: { type: Date, required: true, default: Date.now() },
+  cancel_at_period_end: { type: Boolean, required: true, default: false },
+  canceled_at: { type: Date },
   created_at: { type: Date, required: true, default: Date.now() },
   cc_last4: { type: String, default: "4242" },
   cc_exp_month: { type: String, default: "01"},
