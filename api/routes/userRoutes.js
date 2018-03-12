@@ -24,9 +24,9 @@ module.exports = function(app) {
          */
         .post(userController.createUser);
 
-    app.route('/users/:userId')
+    app.route('/users/:username')
         /**
-         * @api {get} /users/:userId Read User
+         * @api {get} /users/:username Read User
          * @apiGroup User
          * @apiParam {Integer} userId Id of the desired user
          * @apiSuccess {JSON} User Object

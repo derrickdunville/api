@@ -326,17 +326,20 @@ exports.createUser = function(req, res) {
 
 exports.readUser = function(req, res) {
     // Check the params
-    if(!req.params.userId){
+    if(!req.params.username){
         res.status(400).send({err: "You must provide a userId"});
     }
     // Check the permission on the resource
     // let permission = ac.can('everyone').readAny('user');
     // if(permission.granted){
-        User.findById(req.params.userId, function(err, user) {
-            if (err)
-                res.status(401).send(err);
-            res.status(201).json(user);
-        });
+    User.findOne({username: req.params.username})
+    .populate({path: 'subscriptions', populate: {path: 'product'}, match: { status: "active" }})
+    .populate({path: 'transactions', populate: {path: 'product'}})
+    .exec(function(err, user) {
+      if (err)
+          res.status(401).send(err);
+      res.status(201).json(user);
+    });
     // } else {
     //     res.status(401).send({err: "Unauthorized"});
     // }
