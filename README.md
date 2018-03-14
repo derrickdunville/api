@@ -106,6 +106,10 @@ mongo
 ![alt text][discord_logo]
 [discord_logo]: https://discordapp.com/assets/4f004ac9be168ac6ee18fc442a52ab53.svg "Discord API Docs"
 
+Inline-style: 
+![alt text](https://github.com/adam-p/markdown-here/raw/master/src/common/images/icon48.png "Logo Title Text 1")
+
+
 ## Heroku
 Heroku is setup with automated deployments for the master branch.
 
