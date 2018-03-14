@@ -12,12 +12,13 @@ SocketIO
 Heroku
 accesscontrol
 
-## Docs
-```
-PRODUCTION: https://api.ascendtrading.net/apidocs
-BETA: https://ascend-api.herokuapp.com/apidocs
-LOCAL: http://localhost:3000/apidocs
-```
+## API Docs
+[PRODUCTION](https://api.ascendtrading.net/apidocs)
+
+[BETA](https://ascend-api.herokuapp.com/apidocs)
+
+[LOCAL](http://localhost:3000/apidocs)
+
 ## Environment Variables
 ### APLHA (Local):
 ```
