@@ -101,10 +101,8 @@ mongo
 ## Helpful Docs
 ### [AccessControl](http://onury.github.io/accesscontrol/?api=ac)
 ### [Mongoose](http://mongoosejs.com/docs/4.x/docs/guide.html)
-### [Stripe](https://stripe.com/docs)
-### [![Discord](https://static.getjar.com/icon-50x50/08/933566_thm.jpg)](https://discordapp.com/developers/docs/intro)
-![alt text](https://static.getjar.com/icon-50x50/08/933566_thm.jpg "Discord API Docs")
-[discord_logo]: https://static.getjar.com/icon-50x50/08/933566_thm.jpg "Discord API Docs"
+### [![Stripe](http://www.futurescope.ie/wp-content/uploads/2016/04/stripe-logo.png "Stripe API Docs)](https://stripe.com/docs)
+### [![Discord](https://static.getjar.com/icon-50x50/08/933566_thm.jpg "Discord API Docs")](https://discordapp.com/developers/docs/intro)
 
 Inline-style: 
 ![alt text](https://discordapp.com/assets/41484d92c876f76b20c7f746221e8151.svg "Logo Title Text 1")
