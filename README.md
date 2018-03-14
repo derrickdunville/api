@@ -103,7 +103,7 @@ mongo
 ### [Mongoose](http://mongoosejs.com/docs/4.x/docs/guide.html)
 ### [Stripe](https://stripe.com/docs)
 ### [![Discord](https://discordapp.com/assets/4f004ac9be168ac6ee18fc442a52ab53.svg)](https://discordapp.com/developers/docs/intro)
-![alt text][discord_logo]
+![alt text](https://discordapp.com/assets/4f004ac9be168ac6ee18fc442a52ab53.svg "Discord API Docs")
 [discord_logo]: https://discordapp.com/assets/4f004ac9be168ac6ee18fc442a52ab53.svg "Discord API Docs"
 
 Inline-style: 
