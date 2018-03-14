@@ -19,7 +19,7 @@ BETA: https://ascend-api.herokuapp.com/apidocs
 LOCAL: http://localhost:3000/apidocs
 ```
 ## Environment Variables
-For APLHA(Local):
+### APLHA (Local):
 ```
 API_PORT=3000
 API_BASE_URL=http://localhost:3000/
@@ -31,7 +31,7 @@ REDIRECT_URI=http://localhost:8080/
 STRIPE_PUBLIC_KEY=
 STRIPE_PRIVATE_KEY=
 ```
-For BETA(Heroku):
+### BETA (Heroku):
 ```
 API_PORT=3000
 API_BASE_URL=https://ascend-api.herokuapp.com/
@@ -41,7 +41,7 @@ DISCORD_CLIENT_SECRET=Nu7ZKYZOijTlsdd6fZS1Iz3KGBBI8Vrk
 DISCORD_CALLBACK=https://ascend-api.herokuapp.com/oauth/discord/callback
 REDIRECT_URI=https://ascend-react.herokuapp.com/
 ```
-For PRODUCTION:
+### PRODUCTION:
 ```
 API_PORT=3000
 API_BASE_URL=http://api.ascendtrading.net/
@@ -76,7 +76,7 @@ db.dropDatabase() //will delete the database & return { "dropped" : "<dbname>", 
 use ascend_trading
 ```
 
-### Ubuntu
+### Mongo Lock Issues - Ubuntu
 ```
 Step 1: Remove lock file.
 sudo rm /var/lib/mongodb/mongod.lock
@@ -99,22 +99,12 @@ mongo
 ```
 
 ## Helpful Docs
-### AccessControl
-```
-http://onury.github.io/accesscontrol/?api=ac
-```
-### Mongoose
-```
-http://mongoosejs.com/docs/4.x/docs/guide.html
-```
-### Stripe
-```
-https://stripe.com/docs
-```
-### Discord
-```
-https://discordapp.com/developers/docs/intro
-```
+### [AccessControl](http://onury.github.io/accesscontrol/?api=ac)
+### [Mongoose](http://mongoosejs.com/docs/4.x/docs/guide.html)
+### [Stripe](https://stripe.com/docs)
+### [![Discord](https://discordapp.com/assets/4f004ac9be168ac6ee18fc442a52ab53.svg)](https://discordapp.com/developers/docs/intro)
+![alt text][discord_logo]
+[discord_logo]: https://discordapp.com/assets/4f004ac9be168ac6ee18fc442a52ab53.svg "Discord API Docs"
 
 ## Heroku
 Heroku is setup with automated deployments for the master branch.
