@@ -99,11 +99,11 @@ mongo
 ```
 
 ## Helpful Docs
-[![AccessControl](https://raw.github.com/onury/accesscontrol/master/ac-logo.png)](http://onury.github.io/accesscontrol/?api=ac)
-[![Mongoose](https://cms-assets.tutsplus.com/uploads/users/34/posts/29527/preview_image/mongoose.jpg)](http://mongoosejs.com/docs/4.x/docs/guide.html)
-[![Stripe](http://www.futurescope.ie/wp-content/uploads/2016/04/stripe-logo.png "Stripe API Docs")](https://stripe.com/docs)
-[![Discord](https://static.getjar.com/icon-50x50/08/933566_thm.jpg "Discord API Docs")](https://discordapp.com/developers/docs/intro)
-[![SocketIO](https://wishmedia.ca/wp-content/uploads/2016/05/socket-io-logo.png)](https://socket.io/docs/)
+[AccessControl](http://onury.github.io/accesscontrol/?api=ac)
+[Mongoose](http://mongoosejs.com/docs/4.x/docs/guide.html)
+[Stripe](https://stripe.com/docs)
+[Discord](https://discordapp.com/developers/docs/intro)
+[SocketIO](https://socket.io/docs/)
 
 
 ## Heroku
