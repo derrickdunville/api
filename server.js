@@ -1,7 +1,9 @@
 let express = require('express'),
     app = express(),
     morgan = require('morgan'),
-    port = process.env.PORT || 3000,
+    API_BASE_URL = process.env.API_BASE_URL || 'http://localhost',
+    API_PORT = process.env.API_PORT || 3000,
+    MONGO_URI = process.env.MONGODB_URI || 'localhost:27017/ascend_trading',
     mongoose = require('mongoose'),
     mongodb = require('mongodb'),
     bodyParser = require('body-parser'),
@@ -54,19 +56,8 @@ app.use(function(req, res) {
     res.status(404).send({url: req.originalUrl + ' not found'})
 })
 
-// app.use(function (err, req, res, next) {
-//     console.log(err.toString())
-//     if (err.name === 'UnauthorizedError') {
-//         res.status(401).send('Invalid Token...')
-//     } else {
-//         res.status(500).send(err)
-//     }
-// })
-
-
-let mongo = process.env.MONGODB_URI || 'localhost:27017/ascend_trading'
 mongoose.Promise = require('bluebird')
-mongoose.connect(mongo, function (err, res) {
+mongoose.connect(MONGODB_URI, function (err, res) {
     if (err) {
         console.log(err)
         process.exit(1)
@@ -74,7 +65,7 @@ mongoose.connect(mongo, function (err, res) {
     // Save database object from the callback for reuse.
     console.log("Database connection ready")
     // Initialize the app.
-    const server = app.listen(process.env.PORT || 3000, function () {
+    const server = app.listen(API_PORT, function () {
         let port = server.address().port
         console.log("API now running on port", port)
     })
