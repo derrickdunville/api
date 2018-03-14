@@ -78,24 +78,28 @@ use ascend_trading
 ```
 
 ### Mongo Lock Issues - Ubuntu
+1. Remove lock file.
 ```
-Step 1: Remove lock file.
 sudo rm /var/lib/mongodb/mongod.lock
-
-Step 2: Repair mongodb.
+```
+2. Repair mongodb.
+```
 sudo mongod --repair
-
-Step 3: start mongodb.
+```
+3. start mongodb.
+```
 sudo start mongod
 or
 sudo service mongod start
-
-Step 4: Check status of mongodb.
+```
+4. Check status of mongodb.
+```
 sudo status mongod
 or   
 sudo service mongod status
-
-Step 5: Start mongo console.
+```
+5. Start mongo console.
+```
 mongo
 ```
 
