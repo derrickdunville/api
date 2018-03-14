@@ -100,9 +100,13 @@ mongo
 
 ## Helpful Docs
 [AccessControl](http://onury.github.io/accesscontrol/?api=ac)
+
 [Mongoose](http://mongoosejs.com/docs/4.x/docs/guide.html)
+
 [Stripe](https://stripe.com/docs)
+
 [Discord](https://discordapp.com/developers/docs/intro)
+
 [SocketIO](https://socket.io/docs/)
 
 
