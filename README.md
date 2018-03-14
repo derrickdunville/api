@@ -107,7 +107,7 @@ mongo
 [discord_logo]: https://discordapp.com/assets/4f004ac9be168ac6ee18fc442a52ab53.svg "Discord API Docs"
 
 Inline-style: 
-![alt text](https://github.com/adam-p/markdown-here/raw/master/src/common/images/icon48.png "Logo Title Text 1")
+![alt text](https://discordapp.com/assets/41484d92c876f76b20c7f746221e8151.svg "Logo Title Text 1")
 
 
 ## Heroku
