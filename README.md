@@ -5,12 +5,7 @@ Ascend Trading Node API - Nodejs, Mongo, SocketIO
 This is the Ascend Trading API. It is a JSON API backend for the Ascend Trading application.
 
 ## Technologies
-nodejs
-mongodb
-mongoose
-SocketIO
-Heroku
-accesscontrol
+nodejs, mongodb, mongoose, accesscontrol, SocketIO, Heroku
 
 ## API Docs
 [PRODUCTION](https://api.ascendtrading.net/apidocs)
@@ -60,6 +55,14 @@ In order to connect this backend API to Stripe, you will need to create a webhoo
 in the Stripe Admin Dashboard that points to:
 ```
 <API_BASE_URL>/stripe
+```
+You can open an ngrok tunnel to this server for Local Development
+
+## Discord
+In order to connect this backend API to Discord OAuth, you will need to create a
+redirect uri in the Discord Admin Dashboard
+```
+<API_BASE_URL>/discord/oauth/callback
 ```
 You can open an ngrok tunnel to this server for Local Development
 
