@@ -2,6 +2,7 @@
 let mongoose = require('mongoose');
 let Schema = mongoose.Schema;
 let bcrypt = require('bcrypt-nodejs');
+let mongoosePaginate = require('mongoose-paginate');
 
 let userSchema = new Schema({
   username: { type: String, unique: true, required: true },
@@ -41,5 +42,7 @@ userSchema.methods.generateHash = function(password) {
 userSchema.methods.validPassword = function(password) {
     return bcrypt.compareSync(password, this.password);
 };
+
+userSchema.plugin(mongoosePaginate);
 
 module.exports = mongoose.model('User', userSchema);

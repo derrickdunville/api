@@ -2,14 +2,21 @@
 var mongoose = require('mongoose')
 var Schema = mongoose.Schema
 var bcrypt   = require('bcrypt-nodejs')
+let mongoosePaginate = require('mongoose-paginate');
 
 var transactionSchema = new Schema({
   user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   subscription: { type: Schema.Types.ObjectId, ref: 'Subscription' },
   product: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
   coupon_id: { type: Number, default: null },
-  trans_num: { type: String, default: null, unique: true },
+  trans_num: {
+    type: String, trim: true, index: {
+      unique: true,
+      partialFilterExpression: {trans_num: {$type: 'string'}}
+    }
+  },
   amount: { type: Number, required: true },
+  amount_refunded: { type: Number, default: 0, required: true },
   total: { type: Number, default: 0.00 },
   tax_amount: { type: Number, default: 0.00 },
   tax_rate: { type: Number, default: 0.000 },
@@ -18,7 +25,7 @@ var transactionSchema = new Schema({
   tax_shipping: { type: Boolean, default: true },
   status: {
     type: String,
-    enum: ['succeeded', 'pending', 'failed'],
+    enum: ['succeeded', 'pending', 'failed', 'refunded'],
     default: 'pending'
   },
   txn_type: { type: String, default: null },
@@ -27,8 +34,9 @@ var transactionSchema = new Schema({
   id_address: { type: String, default: null },
   prorated: { type: Boolean, default: false },
   created_at: { type: Date, required: true, default: Date.now() },
-  expires_at: { type: Date, required: true },
-  end_date: { type: Date, default: null }
+  expires_at: { type: Date, default: null },
+  refunded_at: { type: Date, default: null },
+  end_date: { type: Date, default: null },
 })
-
+transactionSchema.plugin(mongoosePaginate);
 module.exports = mongoose.model('Transaction', transactionSchema)

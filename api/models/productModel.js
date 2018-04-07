@@ -2,6 +2,7 @@
 var mongoose = require('mongoose')
 var Schema = mongoose.Schema
 var bcrypt   = require('bcrypt-nodejs')
+let mongoosePaginate = require('mongoose-paginate');
 
 var productSchema = new Schema({
   currency: { type: String, default: 'usd', required: true },
@@ -41,5 +42,7 @@ var productSchema = new Schema({
   create_date: { type: Date, default: Date.now },
   end_date: { type: Date }
 })
+
+productSchema.plugin(mongoosePaginate);
 
 module.exports = mongoose.model('Product', productSchema)

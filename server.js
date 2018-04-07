@@ -5,10 +5,7 @@ let express = require('express'),
     API_PORT = process.env.API_PORT || 3000,
     MONGODB_URI = process.env.MONGODB_URI || 'localhost:27017/ascend_trading',
     mongoose = require('mongoose'),
-    mongodb = require('mongodb'),
     bodyParser = require('body-parser'),
-    session = require('express-session'),
-    passport = require('passport'),
     // LocalStrategy = require('passport-local').Strategy,
     cors = require('cors'),
 
@@ -34,10 +31,9 @@ app.use(bodyParser.json())
 app.use(function(req, res, next) {
     res.setHeader('Access-Control-Allow-Origin', '*')
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST')
-    res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type, Authorization')
+    res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, content-type, Authorization')
     next()
 })
-
 app.use(cors())
 
 userRoutes(app)
@@ -48,9 +44,7 @@ oauthRoutes(app)
 stripeRoutes(app)
 socketRoutes(app)
 
-app.use('/', express.static('public'))
-app.use('/apidocs', express.static('apidoc'))
-
+app.use('/', express.static('apidoc'))
 // catch 404 and forward to error handler
 app.use(function(req, res) {
     res.status(404).send({url: req.originalUrl + ' not found'})
@@ -75,7 +69,5 @@ mongoose.connect(MONGODB_URI, function (err, res) {
 
     app.io = io // Allows us to access io in the controllers
 })
-
-
 
 module.exports = app // for testing

@@ -204,9 +204,29 @@ invoiceUpdated = function(req, res){
   res.status(200).send()
 }
 
+chargeRefunded = function(req, res) {
+  // console.log(JSON.stringify(req.body.data.object))
+  // Lookup the Transaction record using the id of the charge object
+  let charge = req.body.data.object
+  Transaction.findOneAndUpdate(
+    { trans_num: charge.id },
+    { $set: { status: 'refunded', amount_refunded: charge.amount_refunded }},
+    { new: true },
+    function(err, transaction) {
+      if (err) {
+        console.log("STRIPE WEBHOOK EVENT ERROR: refund.created error occurred: \n" + err)
+      } else {
+        console.log("Transaction Updated to refunded")
+    }
+  });
+  // Fire a socket event to update the client
+  res.status(200).send()
+}
+
 exports.webhook = function(req, res) {
-  console.log("STRIPE WEBHOOK EVENT: " + req.body.type)
-  // let event_json = JSON.parse(res.body)
+  console.log("STRIPE WEBHOOK EVENT: ")
+  console.dir(req.body, {depth: null, colors: true})
+  // let event_json = JSON.parse(req.body)
   // console.log("STRIPE WEBHOOK EVENT BODY: " + JSON.stringify(req.body.data.object))
   switch(req.body.type){
     case "customer.subscription.created":
@@ -238,6 +258,9 @@ exports.webhook = function(req, res) {
       break
     case "invoice.updated":
       invoiceUpdated(req, res)
+      break
+    case "charge.refunded":
+      chargeRefunded(req, res)
       break
     default:
       res.status(200).send()

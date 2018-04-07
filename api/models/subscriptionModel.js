@@ -6,6 +6,7 @@ var bcrypt   = require('bcrypt-nodejs')
 var subscriptionSchema = new Schema({
   user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   product: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
+  transactions: [{ type: Schema.Types.ObjectId, ref: 'Transaction' }],
   coupon: { type: Number, default: null },
   subscription_id: { type: String },
   price: { type: Number, required: true, default: 0.00 },

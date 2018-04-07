@@ -28,21 +28,51 @@ let mongoose      = require('mongoose'),
 // };
 
 exports.listProducts = function(req, res) {
-  // console.log("User Roles: " + req.user.roles);
-  // let permission = ac.can(req.user.roles).readAny('product');
-  // if(permission.granted){
-  Product.find({}, function(err, products) {
-      if (err)
-          res.status(401).send(err)
-      // filter the result set
-      // let filteredProducts = permission.filter(JSON.parse(JSON.stringify(products)));
-      // console.log('Filtered User List: ' + filteredUsers);
-      res.status(201).send(products)
-  });
-  // } else {
-  //     res.status(400).send({err: "You are not authorized to view all products"});
-  // }
+    // console.log("User Roles: " + req.user.roles);
+
+    let query = {}
+    if(req.query.name !== undefined){
+      query.name = {'$regex': req.query.name, '$options': 'i'}
+    }
+
+    // console.log("Query: " + JSON.stringify(query))
+
+    let options = {}
+    if (req.query.page === undefined) {
+      options.page = 1
+    } else {
+      options.page = parseInt(req.query.page)
+    }
+    // console.log("Options: " + JSON.stringify(options))
+
+    // let permission = ac.can(req.user.roles).readAny('user');
+    // if(permission.granted){
+
+    // } else {
+    //     res.status(400).send({err: "You are not authorized to view all users"});
+    // }
+
+    Product.paginate(query, { page: options.page, limit: 25 }, function(err, products) {
+      if(err){
+        res.status(401).send('Error getting products')
+      } else {
+        /**
+         * Response looks like:
+         * {
+         *   docs: [...] // array of Posts
+         *   total: 42   // the total number of Posts
+         *   limit: 10   // the number of Posts returned per page
+         *   page: 2     // the current page of Posts returned
+         *   pages: 5    // the total number of pages
+         * }
+        */
+        // console.dir("products: " + JSON.stringify(products))
+        res.status(201).send(products);
+
+      }
+    });
 };
+
 
 exports.createProduct = function(req, res) {
 

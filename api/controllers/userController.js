@@ -289,19 +289,59 @@ exports.loginUser = function(req, res){
 
 exports.listUsers = function(req, res) {
     // console.log("User Roles: " + req.user.roles);
+
+    let query = {}
+
+    if(req.query.username !== undefined){
+      query.username = {'$regex': req.query.username, '$options': 'i'}
+    }
+    if(req.query.email !== undefined){
+      query.email = {'$regex': req.query.email, '$options': 'i'}
+    }
+    if(req.query.discord !== undefined){
+      query.discord = {'$regex': req.query.discord, '$options': 'i'}
+    }
+    if(req.query.role !== undefined){
+      query.roles = {'$in': [req.query.role]}
+    }
+
+    // console.log("Query: " + JSON.stringify(query))
+    //username
+    //role
+    //email
+    let options = {}
+    if (req.query.page === undefined) {
+      options.page = 1
+    } else {
+      options.page = parseInt(req.query.page)
+    }
+    // console.log("Options: " + JSON.stringify(options))
+
     // let permission = ac.can(req.user.roles).readAny('user');
     // if(permission.granted){
-        User.find({}, function(err, users) {
-            if (err)
-                res.status(401).send(err);
-            // filter the result set
-            // let filteredUsers = permission.filter(JSON.parse(JSON.stringify(users)));
-            // console.log('Filtered User List: ' + filteredUsers);
-            res.status(201).send(users);
-        });
+
     // } else {
     //     res.status(400).send({err: "You are not authorized to view all users"});
     // }
+
+    User.paginate(query, { page: options.page, limit: 25 }, function(err, users) {
+      if(err){
+        res.status(401).send('Error getting users')
+      } else {
+        /**
+         * Response looks like:
+         * {
+         *   docs: [...] // array of Posts
+         *   total: 42   // the total number of Posts
+         *   limit: 10   // the number of Posts returned per page
+         *   page: 2     // the current page of Posts returned
+         *   pages: 5    // the total number of pages
+         * }
+        */
+        // console.dir("users: " + JSON.stringify(users))
+        res.status(201).send(users);
+      }
+    });
 };
 
 exports.createUser = function(req, res) {
@@ -338,6 +378,7 @@ exports.readUser = function(req, res) {
     .exec(function(err, user) {
       if (err)
           res.status(401).send(err);
+      console.dir(user)
       res.status(201).json(user);
     });
     // } else {
