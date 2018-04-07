@@ -10,9 +10,16 @@ var transactionSchema = new Schema({
   product: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
   coupon_id: { type: Number, default: null },
   trans_num: {
-    type: String, trim: true, index: {
+    type: String,
+    validate: {
+      validator: function(v){
+        return v !== null || v != undefined;
+      },
+      message: '{trans_num} cannot be null or undefined'
+    },
+    index: {
+      sparse:true,
       unique: true,
-      partialFilterExpression: {trans_num: {$type: 'string'}}
     }
   },
   amount: { type: Number, required: true },

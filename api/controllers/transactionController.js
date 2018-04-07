@@ -5,6 +5,7 @@ let mongoose      = require('mongoose'),
     jwt           = require('jsonwebtoken'),
     ejwt          = require('express-jwt'),
     Transaction    = mongoose.model('Transaction'),
+    User          = mongoose.model('User'),
     waterfall     = require('async-waterfall'),
     AccessControl = require('accesscontrol'),
     stripe        = require("stripe")("sk_test_K3Ol21vL7fiVAUDcp8MnOAYT");
@@ -91,14 +92,13 @@ exports.createTransaction = function(req, res) {
       } else {
           // console.log("Transaction created" + transaction);
           // Push the new transaction onto the users transaction list
-        transaction.user.transactions.push(transaction._id)
-        transaction.user.save(function (err, user) {
-          if(err){
-            res.status(401).send(err)
-          } else {
-            res.status(201).json(transaction)
-          }
-        });
+          User.findByIdAndUpdate(transaction.user, {$push: {transactions: transaction}}, {new: true}, function(err, user){
+            if(err){
+              res.status(401).send(err)
+            } else {
+              res.status(201).json(transaction)
+            }
+          })
       }
   });
   // }

@@ -3,7 +3,7 @@ var products = require('./products')
 var users = require('./users')
 var transactions = require('./transactions')
 
-let mongo = process.env.MONGODB_URI || 'localhost:27017/ascend_trading'
+let mongo = process.env.MONGODB_URI || 'mongodb://localhost/ascend_trading'
 // Connect to MongoDB via Mongoose
 seeder.connect(mongo, function() {
 

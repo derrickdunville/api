@@ -3,7 +3,7 @@ let express = require('express'),
     morgan = require('morgan'),
     API_BASE_URL = process.env.API_BASE_URL || 'http://localhost',
     API_PORT = process.env.API_PORT || 3000,
-    MONGODB_URI = process.env.MONGODB_URI || 'localhost:27017/ascend_trading',
+    MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost/ascend_trading',
     mongoose = require('mongoose'),
     bodyParser = require('body-parser'),
     // LocalStrategy = require('passport-local').Strategy,
@@ -50,7 +50,7 @@ app.use(function(req, res) {
     res.status(404).send({url: req.originalUrl + ' not found'})
 })
 
-mongoose.Promise = require('bluebird')
+// mongoose.Promise = require('bluebird')
 mongoose.connect(MONGODB_URI, function (err, res) {
     if (err) {
         console.log(err)
