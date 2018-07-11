@@ -2,6 +2,7 @@
 var mongoose = require('mongoose')
 var Schema = mongoose.Schema
 var bcrypt   = require('bcrypt-nodejs')
+let mongoosePaginate = require('mongoose-paginate');
 
 var subscriptionSchema = new Schema({
   user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
@@ -44,4 +45,5 @@ var subscriptionSchema = new Schema({
   end_date: { type: Date, default: null }
 })
 
+subscriptionSchema.plugin(mongoosePaginate);
 module.exports = mongoose.model('Subscription', subscriptionSchema)

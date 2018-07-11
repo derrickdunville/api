@@ -7,19 +7,19 @@ let mongoose      = require('mongoose'),
     waterfall     = require('async-waterfall'),
     AccessControl = require('accesscontrol'),
     stripe        = require('stripe')("sk_test_K3Ol21vL7fiVAUDcp8MnOAYT"),
-    Product       = mongoose.model('Product')
+    Commission       = mongoose.model('Commission')
 
 //
 // let grants = {
 //     admin: {
-//         product: {
+//         commission: {
 //             "read:any": ["*"],
 //             "delete:any": ["*"],
 //             "update:any": ["*"]
 //         }
 //     },
 //     everyone: {
-//         product: {
+//         commission: {
 //             "read:any": ['*', '!password', '!token', '!email'],
 //             "delete:own": ['*'],
 //             "update:own": ['*']
@@ -27,7 +27,7 @@ let mongoose      = require('mongoose'),
 //     }
 // };
 
-exports.listProducts = function(req, res) {
+exports.listCommissions = function(req, res) {
     // console.log("User Roles: " + req.user.roles);
     let query = {}
     if(req.query._id !== undefined){
@@ -93,10 +93,10 @@ exports.listProducts = function(req, res) {
     //     res.status(400).send({err: "You are not authorized to view all users"});
     // }
 
-    Product.paginate(query, options, function(err, products) {
+    Commission.paginate(query, options, function(err, commissions) {
       if(err){
         console.log(err)
-        res.status(401).send({err: 'Error getting products'})
+        res.status(401).send({err: 'Error getting commissions'})
       } else {
         /**
          * Response looks like:
@@ -108,110 +108,109 @@ exports.listProducts = function(req, res) {
          *   pages: 5    // the total number of pages
          * }
         */
-        // console.dir("products: " + JSON.stringify(products))
-        res.status(201).send(products);
+        // console.dir("commissions: " + JSON.stringify(commissions))
+        res.status(201).send(commissions);
 
       }
     });
 };
 
 
-exports.createProduct = function(req, res) {
+exports.createCommission = function(req, res) {
 
-  // Only admin should be allowed to create products
-  // console.log("Creating product...");
-  console.log("Request Body: ");
-  console.dir(req.body)
+  // Only admin should be allowed to create commissions
+  // console.log("Creating commission...");
+  // console.log("Request Body: " + req.body);
   // if(!req.body.username || !req.body.password || !req.body.email) {
   //     res.status(400).send({err: "Must provide username, password, and email"});
   // } else {
 
   // Error check the request body
-  let newProduct = new Product(req.body);
+  let newCommission = new Commission(req.body);
 
     // Create the equivalent stripe plan if not one-time
-  if (newProduct.interval !== 'one-time') {
+  if (newCommission.interval !== 'one-time') {
     console.log("Creating stripe plan...");
     stripe.plans.create({
-      amount: Math.round(newProduct.amount * 100),
-      interval: newProduct.interval,
-      name: newProduct.name,
-      currency: newProduct.currency
+      amount: Math.round(newCommission.amount * 100),
+      interval: newCommission.interval,
+      name: newCommission.name,
+      currency: newCommission.currency
     }, function(err, plan) {
         if (err) {
           console.log(err);
           res.status(401).send(err)
         } else {
           console.log(plan);
-          newProduct.stripe_plan_id = plan.id
-          console.log("Saving product...");
-          newProduct.save(function (err, product) {
+          newCommission.stripe_plan_id = plan.id
+          console.log("Saving commission...");
+          newCommission.save(function (err, commission) {
               if (err) {
-                  console.log("Error creating product!");
+                  console.log("Error creating commission!");
                   res.status(401).send(err)
               } else {
-                  console.log("Product created" + product);
-                  res.status(201).json(product)
+                  console.log("Commission created" + commission);
+                  res.status(201).json(commission)
               }
           })
         }
     })
   } else {
-    console.log("Saving product...");
-    newProduct.save(function (err, product) {
+    console.log("Saving commission...");
+    newCommission.save(function (err, commission) {
         if (err) {
-            // console.log("Error creating product!");
+            // console.log("Error creating commission!");
             res.status(401).send(err)
         } else {
-            // console.log("Product created" + product);
-            res.status(201).json(product)
+            // console.log("Commission created" + commission);
+            res.status(201).json(commission)
         }
     })
   }
 };
 
-exports.readProduct = function(req, res) {
+exports.readCommission = function(req, res) {
   // Check the params
-  // if(!req.params.productId){
-  //     res.status(400).send({err: "You must provide a productId"});
+  // if(!req.params.commissionId){
+  //     res.status(400).send({err: "You must provide a commissionId"});
   // }
   // // Check the permission on the resource
-  // let permission = ac.can('everyone').readAny('product');
+  // let permission = ac.can('everyone').readAny('commission');
   // if(permission.granted){
-  Product.findById(req.params.productId, function(err, product) {
+  Commission.findById(req.params.commissionId, function(err, commission) {
       if (err)
           res.status(401).send(err)
           // Todo: Filter the memebership object
-      res.status(201).json(product)
+      res.status(201).json(commission)
   });
   // } else {
   //     res.status(401).send({err: "Unauthorized"});
   // }
 };
 
-exports.updateProduct = function(req, res) {
+exports.updateCommission = function(req, res) {
 
   // // Check the params
-  // if(!req.params.productId){
-  //     res.status(400).send({err: "You must provide a productId"});
+  // if(!req.params.commissionId){
+  //     res.status(400).send({err: "You must provide a commissionId"});
   // }
   // // Check the permission on the resource
-  // let permission = ac.can(req.session.user.roles).updateOwn('product');
+  // let permission = ac.can(req.session.user.roles).updateOwn('commission');
   // if(permission.granted){
-  Product.findOneAndUpdate(req.params.productId, req.body, {new: true}, function(err, product) {
+  Commission.findOneAndUpdate(req.params.commissionId, req.body, {new: true}, function(err, commission) {
       if (err)
           res.status(401).send(err)
-      res.status(201).json(product)
+      res.status(201).json(commission)
   });
   // } else {
-  //     res.status(400).send({err: "You are not authorized to update products"});
+  //     res.status(400).send({err: "You are not authorized to update commissions"});
   // }
 };
 
-exports.deleteProduct = function(req, res) {
-  Product.findOneAndUpdate(req.params.productId, {end_date: new Date()}, {new: true}, function(err, product) {
+exports.deleteCommission = function(req, res) {
+  Commission.findOneAndUpdate(req.params.commissionId, {end_date: new Date()}, {new: true}, function(err, commission) {
       if (err)
           res.status(401).send(err)
-      res.status(201).json({message: 'product successfully end dated'})
+      res.status(201).json({message: 'commission successfully end dated'})
   })
 }

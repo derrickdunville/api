@@ -32,18 +32,72 @@ exports.listTransactions = function(req, res) {
     // console.log("User Roles: " + req.user.roles);
 
     let query = {}
+
     if(req.query._id !== undefined){
-      query.name = {'$regex': req.query._id, '$options': 'i'}
+      query._id = req.query._id
+    }
+    if(req.query.trans_num !== undefined){
+      query.amount = req.query.trans_num
+    }
+    if(req.query.amount !== undefined){
+      query.amount = req.query.amount
+    }
+    if(req.query.amount !== undefined){
+      query.amount = req.query.amount
+    }
+    if(req.query.total !== undefined){
+      query.amount = req.query.total
+    }
+    if(req.query.user !== undefined){
+      query.amount = req.query.user
     }
 
+    // Handle parsing sort
+    let sort = {}
+    if(req.query.sort !== undefined){
+      console.log(req.query.sort)
+      var sortList = req.query.sort.split(",")
+      for(var i = 0; i < sortList.length; ++i){
+        var direction = -1
+        var sortTypeArray = sortList[i].split(":")
+        var column = sortTypeArray[0]
+        if(sortTypeArray.length > 1){
+          if(sortTypeArray[1] === "asc"){
+            direction = 1
+          }
+        }
+        sort[column] = direction
+      }
+
+    }
     console.log("Query: " + JSON.stringify(query))
 
+    console.log("Sort: " + JSON.stringify(sort))
+    console.log("Limit: " + req.query.limit)
     let options = {}
+    /* Handle parsing current page */
     if (req.query.page === undefined) {
       options.page = 1
     } else {
       options.page = parseInt(req.query.page)
     }
+
+    /* Handle parsing limit */
+    if(req.query.limit === undefined){
+      options.limit = 10
+    } else {
+      if(parseInt(req.query.limit) > 100){
+        options.limit = 100
+      } else {
+        options.limit = parseInt(req.query.limit)
+      }
+    }
+
+    if(sort != {}){
+      options.sort = sort
+    }
+    options.lean = true
+    options.populate = ['user', 'product']
     console.log("Options: " + JSON.stringify(options))
 
     // let permission = ac.can(req.user.roles).readAny('user');
@@ -53,9 +107,10 @@ exports.listTransactions = function(req, res) {
     //     res.status(400).send({err: "You are not authorized to view all users"});
     // }
 
-    Transaction.paginate(query, { page: options.page, limit: 25 }, function(err, transactions) {
+    Transaction.paginate(query,  options, function(err, transactions) {
       if(err){
-        res.status(401).send('Error getting transactions')
+        console.log(err)
+        res.status(401).send({err: 'Error getting transactions'})
       } else {
         /**
          * Response looks like:
@@ -67,7 +122,7 @@ exports.listTransactions = function(req, res) {
          *   pages: 5    // the total number of pages
          * }
         */
-        console.dir("transactions: " + JSON.stringify(transactions))
+        console.dir(transactions)
         res.status(201).send(transactions);
 
       }

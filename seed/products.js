@@ -47,19 +47,43 @@ exports.seedProducts = function(){
       allow_renewals: false,
       access: "expire",
       interval: "month",
-      currency: "usd"
+      currency: "usd",
+      category: "membership"
     }
   documents.push(stripe_product)
 
   // create fake products
-  let number_of_seeds = 60
+  let number_of_seeds = 25
   for (let i = 0; i < number_of_seeds; ++i) {
     let product = {}
     product._id = utils.mongoObjectId()
-    product.name = faker.commerce.productName()
+    product.name = faker.commerce.productName() + " Class"
     product.interval = "one-time"
     product.amount = faker.commerce.price()
     product.description = "test description"
+    product.category = "class"
+    documents.push(product)
+  }
+  number_of_seeds = 11
+  for (let i = 0; i < number_of_seeds; ++i) {
+    let product = {}
+    product._id = utils.mongoObjectId()
+    product.name = faker.commerce.productName() + " Scanner"
+    product.interval = "one-time"
+    product.amount = faker.commerce.price()
+    product.description = "test description"
+    product.category = "scanner"
+    documents.push(product)
+  }
+  number_of_seeds = 16
+  for (let i = 0; i < number_of_seeds; ++i) {
+    let product = {}
+    product._id = utils.mongoObjectId()
+    product.name = faker.commerce.productName() + " Script"
+    product.interval = "one-time"
+    product.amount = faker.commerce.price()
+    product.description = "test description"
+    product.category = "script"
     documents.push(product)
   }
 

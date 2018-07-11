@@ -11,15 +11,22 @@ let express = require('express'),
 
     //Mongoose Models
     User = require('./api/models/userModel'),
-    Product = require('./api/models/productModel'),
+    Commission = require('./api/models/commissionModel'),
     Transaction = require('./api/models/transactionModel'),
+    Product = require('./api/models/productModel'),
     Subscription = require('./api/models/subscriptionModel'),
+    Click = require('./api/models/clickModel'),
+
 
     //Routes
+    meRoutes = require('./api/routes/meRoutes'),
+    validationRoutes = require('./api/routes/validationRoutes'),
     userRoutes = require('./api/routes/userRoutes'),
     productRoutes = require('./api/routes/productRoutes'),
     subscriptionRoutes = require('./api/routes/subscriptionRoutes'),
     transactionRoutes = require('./api/routes/transactionRoutes'),
+    commissionRoutes = require('./api/routes/commissionRoutes'),
+    clickRoutes = require('./api/routes/clickRoutes'),
     oauthRoutes = require('./api/routes/oauthRoutes'),
     stripeRoutes = require('./api/routes/stripeRoutes'),
     socketRoutes = require('./api/routes/socketRoutes'),
@@ -36,10 +43,14 @@ app.use(function(req, res, next) {
 })
 app.use(cors())
 
+meRoutes(app)
+validationRoutes(app)
 userRoutes(app)
 productRoutes(app)
 subscriptionRoutes(app)
 transactionRoutes(app)
+commissionRoutes(app)
+clickRoutes(app)
 oauthRoutes(app)
 stripeRoutes(app)
 socketRoutes(app)

@@ -9,7 +9,8 @@ let mongoose  = require('mongoose'),
     waterfall = require('async-waterfall'),
     crypto    = require('crypto'),
     nodemailer = require('nodemailer'),
-    AccessControl = require('accesscontrol');
+    AccessControl = require('accesscontrol'),
+    mailers = require('../mailers')
 
 // var accessList = [
 //   //create user is unprotected
@@ -201,7 +202,7 @@ exports.resetPassword = function(req, res) {
           // console.log("err: " + err);
         }
         // console.log("Sending password reset email...");
-        res.status(201).send({"msg": "Password successfully reset email sent to " + user.email});
+        res.status(201).send({"msg": "Password successfully reset, email sent to " + user.email});
       });
     }
   ],
@@ -305,18 +306,51 @@ exports.listUsers = function(req, res) {
       query.roles = {'$in': [req.query.role]}
     }
 
-    // console.log("Query: " + JSON.stringify(query))
-    //username
-    //role
-    //email
+    // Handle parsing sort
+    let sort = {}
+    if(req.query.sort !== undefined){
+      console.log(req.query.sort)
+      var sortList = req.query.sort.split(",")
+      for(var i = 0; i < sortList.length; ++i){
+        var direction = -1
+        var sortTypeArray = sortList[i].split(":")
+        var column = sortTypeArray[0]
+        if(sortTypeArray.length > 1){
+          if(sortTypeArray[1] === "asc"){
+            direction = 1
+          }
+        }
+        sort[column] = direction
+      }
+
+    }
+    console.log("Query: " + JSON.stringify(query))
+    console.log("Sort: " + JSON.stringify(sort))
+    console.log("Limit: " + req.query.limit)
     let options = {}
+    /* Handle parsing current page */
     if (req.query.page === undefined) {
       options.page = 1
     } else {
       options.page = parseInt(req.query.page)
     }
-    // console.log("Options: " + JSON.stringify(options))
 
+    /* Handle parsing limit */
+    if(req.query.limit === undefined){
+      options.limit = 10
+    } else {
+      if(parseInt(req.query.limit) > 100){
+        options.limit = 100
+      } else {
+        options.limit = parseInt(req.query.limit)
+      }
+    }
+
+    if(sort != {}){
+      options.sort = sort
+    }
+    options.lean = true
+    console.log("Options: " + JSON.stringify(options))
     // let permission = ac.can(req.user.roles).readAny('user');
     // if(permission.granted){
 
@@ -324,9 +358,10 @@ exports.listUsers = function(req, res) {
     //     res.status(400).send({err: "You are not authorized to view all users"});
     // }
 
-    User.paginate(query, { page: options.page, limit: 25 }, function(err, users) {
+    User.paginate(query, options, function(err, users) {
       if(err){
-        res.status(401).send('Error getting users')
+        console.log(JSON.stringify(err))
+        res.status(401).send({err:'Error getting users'})
       } else {
         /**
          * Response looks like:
@@ -345,23 +380,71 @@ exports.listUsers = function(req, res) {
 };
 
 exports.createUser = function(req, res) {
-    // console.log("Creating user...");
-    // console.log("Request Body: " + req.body);
-    if(!req.body.username || !req.body.password || !req.body.email) {
-        res.status(400).send({err: "Must provide username, password, and email"});
-    } else {
-        let newUser = new User({username: req.body.username, password: req.body.password, email: req.body.email});
+    console.log("Creating user...")
+    console.log("Request Body: " + JSON.stringify(req.body))
+    waterfall([
+      function(done){
+        if(!req.body.username || !req.body.password || !req.body.email) {
+          res.status(400).send({err: "Must provide username, password, and email"});
+        } else {
+          // check if referred_by came with the new user
+          let referred_by
+          if(req.body.referred_by == undefined){
+            referred_by = null
+            done(null, null, done)
+          } else {
+            console.log("New user was referred by " + referred_by + "... looking up referring user")
+            User.findOne({username: req.body.referred_by})
+            .exec(function(err, referred_by) {
+              if (err){
+                  done(err)
+              }
+              console.log("referred_by: " + referred_by.username)
+              if(referred_by != null || referred_by != undefined){
+                done(err, referred_by)
+              } else {
+                done(err, null)
+              }
+            });
+          }
+        }
+      },
+      function(referred_by, done){
+        console.log("referred_by: wtf?")
+        console.dir(referred_by)
+        let referred_by_user_id
+        if(referred_by == null){
+          referred_by_user_id = null
+        } else {
+          referred_by_user_id = referred_by._id
+        }
+        let newUser = new User({username: req.body.username, password: req.body.password, email: req.body.email, referred_by: referred_by_user_id});
         newUser.save(function (err, user) {
             if (err) {
-                // console.log("Error creating user!");
-                res.status(401).send(err);
+                console.log("Error creating user!")
+                res.status(401).send(err)
             } else {
-                // console.log("User created");
-                // Send them a welcome email here
-                res.status(201).json(user);
+              user.token = jwt.sign(user, 'ascendtradingapi');
+              user.save(function(err,updated_user){
+                  // console.log('Logged in...');
+                  // Send the new user a welcome email here
+                  // Send the referring user an emai
+                  console.log("User created")
+                  mailers.sendNewUserWelcomeMail(updated_user)
+                  if(referred_by != null){
+                    mailers.sendNewReferralRegistrationMail(updated_user, referred_by)
+                  }
+                  res.status(201).send(updated_user);
+              })
             }
         });
-    }
+      }
+    ],
+    function(err){
+      if (err) {
+        res.status(401).send(err)
+      }
+    });
 };
 
 exports.readUser = function(req, res) {

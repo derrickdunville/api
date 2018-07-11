@@ -11,7 +11,7 @@ exports.seedUsers= function(){
       _id: '5a6a572368cb6852a68a83d4',
       username: 'derrick',
       password: 'derrick',
-      email: 'derrick@ascendtrading.net',
+      email: 'dev@ascendtrading.net',
       roles: ['admin']
     }
   documents.push(derrick)
@@ -25,17 +25,17 @@ exports.seedUsers= function(){
     }
   documents.push(frank)
 
-  let number_of_seeds = 60
-  // create fake users with "everyone" role
-  for (let i = 0; i < number_of_seeds; ++i) {
-    let user = {}
-    user._id = utils.mongoObjectId()
-    user.username = faker.internet.userName()
-    user.email = faker.internet.email()
-    user.password = faker.internet.password()
-    user.roles = ["everyone"]
-    documents.push(user)
-  }
+  // let number_of_seeds = 60
+  // // create fake users with "everyone" role
+  // for (let i = 0; i < number_of_seeds; ++i) {
+  //   let user = {}
+  //   user._id = utils.mongoObjectId()
+  //   user.username = faker.internet.userName()
+  //   user.email = faker.internet.email()
+  //   user.password = faker.internet.password()
+  //   user.roles = ["everyone"]
+  //   documents.push(user)
+  // }
 
   let users = {
     model: model,

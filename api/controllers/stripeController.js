@@ -11,6 +11,7 @@ let mongoose      = require('mongoose'),
     Transaction   = mongoose.model('Transaction')
     Subscription  = mongoose.model('Subscription')
     Product       = mongoose.model('Product')
+    Commission    = mongoose.model('Commission')
 
 customerSubscriptionCreated = function(req, res) {
   console.log(JSON.stringify(req.body.data.object))
@@ -149,6 +150,28 @@ invoiceCreated = function(req, res) {
                     res.status(401).send(err);
                 } else {
                     console.log("Transaction created");
+                    console.dir(user)
+                    if(user.referred_by != null){
+                      console.log("Transaction was referred by: " + user.referred_by + " creating new commision")
+                      let newCommission = new Commission({
+                        user: user.referred_by, // referring users id
+                        transaction: transaction._id,
+                        rate: 10,
+                        total: Math.floor(transaction.amount*(10/100)), //amount is in pennies
+                        corrected_total: 0
+                      })
+                      newCommission.save(function (err, commission) {
+                        if(err){
+                          console.log("Saving newCommission error: " + err)
+                          res.status(401).send(err)
+                        } else {
+                          console.log("newCommission saved")
+                          console.dir(commission)
+                        }
+                      })
+                    } else {
+                      console.log("Transaction was not referred")
+                    }
                     // console.log("Subscription created" + subscription);
                     User.findByIdAndUpdate(user._id, {$push: {transactions: transaction}}, {new: true}, function(err, updatedUser){
                       if(err){
@@ -265,4 +288,17 @@ exports.webhook = function(req, res) {
     default:
       res.status(200).send()
   }
+}
+
+exports.getCountries = function(req, res) {
+  stripe.countrySpecs.list({limit: 100}, function(err, countrySpecs) {
+    let countries = {}
+    // console.dir(countrySpecs.data)
+    for(let i = 0; i < countrySpecs.data.length; ++i){
+      // console.dir(countrySpecs.data[i])
+      countries[countrySpecs.data[i].id] = countrySpecs.data[i]
+    }
+    // console.dir(countries)
+    res.status(200).send(JSON.stringify(countries))
+  })
 }

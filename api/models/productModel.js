@@ -15,6 +15,11 @@ var productSchema = new Schema({
   name: { type: String, unique: true, required: true},
   amount: { type: Number, required: true },
   description: { type: String },
+  category: {
+    type: String,
+    enum: ['membership', 'class', 'script', 'scanner'],
+    default: 'membership'
+  },
   access: {
     type: String,
     enum: ['lifetime', 'expire', 'fixed-expire'],
@@ -44,5 +49,4 @@ var productSchema = new Schema({
 })
 
 productSchema.plugin(mongoosePaginate);
-
 module.exports = mongoose.model('Product', productSchema)

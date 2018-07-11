@@ -8,7 +8,7 @@ let userSchema = new Schema({
   username: { type: String, unique: true, required: true },
   password: { type: String, required: true },
   email: { type: String, unique: true, required: true},
-  created_date: { type: Date, default: Date.now },
+  created_at: { type: Date, default: Date.now },
   token: { type: String, default: null },
   passwordResetToken: { type: String, default: null },
   passwordResetExpires: { type: Date, default: null },
@@ -28,8 +28,10 @@ let userSchema = new Schema({
     default: ['everyone']
   },
   stripe_cus_id: { type: String, default: null },
+  stripe_acct_id: { type: String, default: null },
   transactions: [{ type: Schema.Types.ObjectId, ref: 'Transaction' }],
-  subscriptions: [{ type: Schema.Types.ObjectId, ref: 'Subscription' }]
+  subscriptions: [{ type: Schema.Types.ObjectId, ref: 'Subscription' }],
+  referred_by: { type: Schema.Types.ObjectId, ref: 'User'}
 });
 
 // methods ======================
