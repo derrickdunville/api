@@ -104,6 +104,11 @@ mongo                                 //5. Start mongo console.
 ## Heroku
 Heroku is setup with automated deployments for the master branch.
 
+## AWS S3
+S3 is used to handle file uploads and static assets for the application
+S3 Bucket: ascendtrading
+  folders: /avatars
+
 ## Start the API
 Start the mongodb server
 ```C:\Program Files\MongoDB\Server\3.4\bin>mongod.exe```

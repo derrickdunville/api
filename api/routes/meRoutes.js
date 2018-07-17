@@ -2,7 +2,9 @@
 module.exports = function(app) {
     let authService = require('../helpers/authService'),
         meController = require('../controllers/meController'),
-        config  = require('../config')
+        config  = require('../config'),
+        multer    = require('multer'),
+        upload    = multer()
 
     app.route('/@me')
       /**
@@ -41,13 +43,13 @@ module.exports = function(app) {
        * @apiSuccess {JSON} Update my referral account details
        * @apiError Unauthorized user is unauthorized
        */
-      .put(authService.ensureAuthorized, meController.updateReferralAccount)
-      // /**
-      //  * @api {delete} /@me/referrals/account
-      //  * @apiGroup @me
-      //  * @apiSuccess {JSON} Update my referral account details
-      //  * @apiError Unauthorized user is unauthorized
-      //  */
+      .put(authService.ensureAuthorized, upload.fields([{name: 'identity_document_front', maxCount: 1}, {name: 'identity_document_back', maxCount: 1}]), meController.updateReferralAccount)
+      /**
+       * @api {delete} /@me/referrals/account
+       * @apiGroup @me
+       * @apiSuccess {JSON} Update my referral account details
+       * @apiError Unauthorized user is unauthorized
+       */
       // .delete(authService.ensureAuthorized, meController.myReferrals)
     app.route('/@me/referrals/account/bank_account')
       /**

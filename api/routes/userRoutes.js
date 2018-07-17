@@ -2,7 +2,9 @@
 module.exports = function(app) {
     let authService = require('../helpers/authService'),
         userController = require('../controllers/userController'),
-        config  = require('../config')
+        config  = require('../config'),
+        multer    = require('multer'),
+        upload    = multer()
 
     // users Routes
     app.route('/users')
@@ -24,7 +26,7 @@ module.exports = function(app) {
          */
         .post(userController.createUser);
 
-    app.route('/users/:username')
+    app.route('/users/:userId')
         /**
          * @api {get} /users/:username Read User
          * @apiGroup User
@@ -40,7 +42,7 @@ module.exports = function(app) {
          * @apiSuccess {JSON} User Object
          * @apiError Unauthorized user is unauthorized
          */
-        .put(authService.ensureAuthorized, userController.updateUser)
+        .put(authService.ensureAuthorized, upload.single('avatar'), userController.updateUser)
         /**
          * @api {delete} /users/:userId Delete User
          * @apiGroup User

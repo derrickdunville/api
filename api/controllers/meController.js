@@ -6,7 +6,9 @@ let mongoose  = require('mongoose'),
     Click     = mongoose.model('Click'),
     Commission = mongoose.model('Commission'),
     ip        = require('ip'),
-    stripe    = require('stripe')("sk_test_K3Ol21vL7fiVAUDcp8MnOAYT")
+    stripe    = require('stripe')("sk_test_K3Ol21vL7fiVAUDcp8MnOAYT"),
+    waterfall = require('async-waterfall')
+
 
 exports.me = function(req, res) {
     console.log("Getting me...")
@@ -124,28 +126,120 @@ exports.createReferralAccount = function(req, res) {
 }
 
 exports.updateReferralAccount = function(req, res) {
+  console.dir(req.files)
   console.dir(req.body)
-  if(req.user.stripe_acct_id == null){
-    res.status(401).send()
-  } else {
-    res.status(200).send()
-    // stripe.accounts.update(req.user.stripe_acct_id, {
-    //     legal_entity: req.body.legal_entity,
-    //   }).then(function(account, err){
-    //   if(err){
-    //     console.log("STRIPE - ERROR")
-    //     console.dir(err)
-    //     res.status(400).send({err: err})
-    //   } else {
-    //     console.log("STRIPE - Account Created")
-    //     console.dir(account)
-    //     res.status(201).send(account)
-    //   }
-    // }).catch(function(error) {
-    //   console.log(error);
-    //   res.status(500).send({err: error})
-    // })
-  }
+  waterfall([
+    function(done){
+      // validation of user account and form-data
+      if(req.user.stripe_acct_id == null){
+        console.log("no referral account")
+        done({message: "no referral account", code: 401}, null)
+      } else {
+        done(null, req.user.stripe_acct_id)
+      }
+    },
+    function(stripe_acct_id, done){
+      let front
+      if(req.files['identity_document_front'] != undefined){
+        console.log("contains identity_document_front")
+        console.dir(req.files['identity_document_front'][0])
+        let identity_document_front = req.files['identity_document_front'][0] // only 1 in the list
+        // handle uploading files to stripe
+        stripe.fileUploads.create({
+          purpose: 'identity_document',
+          file: {
+            data: identity_document_front.buffer,
+            name: identity_document_front.originalname,
+            type: 'application/octet-stream'
+          }
+        }, function(err, fileUpload){
+          console.dir(fileUpload)
+          front = fileUpload
+          done(null, stripe_acct_id, front)
+        }).catch(function(error) {
+          console.log(error);
+          done({message: error, code: 500}, null)
+          return
+        })
+      } else {
+        console.log("does not contain identity_document_front")
+        done(null, stripe_acct_id, null)
+      }
+    },
+    function(stripe_acct_id, front, done){
+      let back
+      if(req.files['identity_document_back'] != undefined){
+        console.log("contains identity_document_back")
+        console.dir(req.files['identity_document_back'][0])
+        let identity_document_back = req.files['identity_document_back'][0] // only 1 in the list
+        // handle uploading files to stripe
+        stripe.fileUploads.create({
+          purpose: 'identity_document',
+          file: {
+            data: identity_document_back.buffer,
+            name: identity_document_back.originalname,
+            type: 'application/octet-stream'
+          }
+        }, function(err, fileUpload){
+          console.dir(fileUpload)
+          back = fileUpload
+          done(null, stripe_acct_id, front, back)
+        }).catch(function(error) {
+          console.log(error);
+          done({message: error, code: 500}, null)
+        })
+      } else {
+        console.log("does not contain identity_document_back")
+        done(null, stripe_acct_id, front, null)
+      }
+    },
+    function(stripe_acct_id, front, back, done){
+      var referralAccount = JSON.parse(req.body.referralAccount)
+      console.dir(referralAccount.legal_entity)
+      var verification = {
+        document: null,
+        document_back: null
+      }
+      if(front != null){
+        verification.document = front.id
+      } else {
+        delete verification.document
+      }
+      if(back != null){
+        verification.document_back = back.id
+      } else {
+        delete verification.document_back
+      }
+      if(front != null || back != null){
+        referralAccount.legal_entity.verification = {}
+        referralAccount.legal_entity.verification = verification
+      }
+
+      stripe.accounts.update(stripe_acct_id, {
+          legal_entity: referralAccount.legal_entity,
+        }).then(function(account, err){
+        if(err){
+          console.log("STRIPE - ERROR")
+          console.dir(err)
+          done({message: err, code: 400}, null)
+        } else {
+          console.log("STRIPE - Account Created")
+          console.dir(account)
+          done(null, account)
+        }
+      }).catch(function(error) {
+        console.log(error);
+        done({message: error, code: 500}, null)
+      })
+    }
+  ],
+  function(err, account){
+    if (err != null) {
+      res.status(err.code).send(err.message);
+    } else {
+      res.status(201).send(account)
+    }
+  });
 }
 
 exports.updateBankAccount = function(req, res) {

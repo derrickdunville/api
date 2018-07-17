@@ -2,15 +2,19 @@
 let mongoose  = require('mongoose'),
     mongodb   = require('mongodb'),
     config    = require('../config'),
+    path      = require('path'),
     _         = require('lodash'),
     jwt       = require('jsonwebtoken'),
     ejwt      = require('express-jwt'),
     User      = mongoose.model('User'),
+    Image     = mongoose.model('Image'),
     waterfall = require('async-waterfall'),
     crypto    = require('crypto'),
     nodemailer = require('nodemailer'),
     AccessControl = require('accesscontrol'),
-    mailers = require('../mailers')
+    mailers   = require('../mailers'),
+    AWS       = require('aws-sdk'),
+    s3        = new AWS.S3({apiVersion: '2006-03-01', region: 'us-east-1'});
 
 // var accessList = [
 //   //create user is unprotected
@@ -232,13 +236,14 @@ exports.verifyPasswordResetToken = function(req, res){
 };
 
 exports.loginUser = function(req, res){
-    // console.log('Logging in...');
-    // console.log(req.body);
+    console.log('Logging in...');
+    console.log(req.body);
     if (req.body.token !== undefined) {
       console.log('Logging in with token');
       User.findOne({token: req.body.token})
       .populate({path: 'subscriptions', populate: {path: 'product'}, match: { status: "active" }})
       .populate({path: 'transactions', populate: {path: 'product'}})
+      .populate({path: 'avatar'})
       .exec(function(err, user) {
           if (err || user === null){
             // console.log('Login failed...');
@@ -259,6 +264,7 @@ exports.loginUser = function(req, res){
           User.findOne({username: req.body.username})
           .populate({path: 'subscriptions', populate: {path: 'product'}, match: { status: "active" }})
           .populate({path: 'transactions', populate: {path: 'product'}})
+          .populate({path: 'avatar'})
           .exec(function(err, user) {
               if (err || user === null){
                   // console.log('Login failed...');
@@ -378,7 +384,6 @@ exports.listUsers = function(req, res) {
       }
     });
 };
-
 exports.createUser = function(req, res) {
     console.log("Creating user...")
     console.log("Request Body: " + JSON.stringify(req.body))
@@ -446,16 +451,15 @@ exports.createUser = function(req, res) {
       }
     });
 };
-
 exports.readUser = function(req, res) {
     // Check the params
-    if(!req.params.username){
+    if(!req.params.userId){
         res.status(400).send({err: "You must provide a userId"});
     }
     // Check the permission on the resource
     // let permission = ac.can('everyone').readAny('user');
     // if(permission.granted){
-    User.findOne({username: req.params.username})
+    User.findOne({userId: req.params.userId})
     .populate({path: 'subscriptions', populate: {path: 'product'}, match: { status: "active" }})
     .populate({path: 'transactions', populate: {path: 'product'}})
     .exec(function(err, user) {
@@ -468,11 +472,15 @@ exports.readUser = function(req, res) {
     //     res.status(401).send({err: "Unauthorized"});
     // }
 };
-
 exports.updateUser = function(req, res) {
 
-  // console.log("Updating User: " + req.params.userId)
-  console.log("username: " + JSON.stringify(req.body.username))
+  console.log("file: " + req.file)
+  console.dir(JSON.parse(req.body.user))
+  console.log("req.params.userId: " + req.params.userId)
+  let user = JSON.parse(req.body.user)
+  if(req.file != undefined){
+    console.dir(req.file)
+  }
 
   // First check if the current users roles can update "ANY" user
   let updatePermission = ac.can(req.user.roles).updateAny('user')
@@ -488,31 +496,87 @@ exports.updateUser = function(req, res) {
   if(updatePermission.granted){
     // Updating own - must provide correct password
     // console.log("req.user._id: " + req.user._id)
-    // console.log("req.params.userId: " + req.params.userId)
     // console.log(req.user._id == req.params.userId)
     if(req.user._id == req.params.userId){
       console.log("Updaing Own User")
-      if(req.body.password === undefined){
+      if(user.password === undefined){
         res.status(401).send({err: "Must provide password"})
       } else {
-        if(req.user.password == req.body.password){
+        if(req.user.password == user.password){
           if(req.body.newPassword !== undefined){
             req.body.password = req.body.newPassword
             console.log("Updaing password")
           } else {
             delete req.body.password
           }
-          let filteredUpdates = updatePermission.filter(req.body)
-          // console.log("Filtered User: " + JSON.stringify(filteredUpdates))
-          User.findOneAndUpdate({_id: req.params.userId}, filteredUpdates, {new: true}, function(err, user) {
-            if (err)
+          let filteredUpdates = updatePermission.filter(user)
+
+
+          // handle uploading new avatar
+          if(req.file != undefined){
+            console.log("Time to create a new ImageModel")
+            let newImage = new Image({
+              bucket: "ascendtrading/avatars", // should be a config var
+              key: req.user._id + "_" + req.file.originalname,
+              image_ext: path.extname(req.file.originalname)
+            })
+            newImage.save(function (err, image) {
+              if (err) {
+                console.log("Error creating avatar ImageModel!")
                 res.status(401).send(err)
-            // console.log("Updated User: " + JSON.stringify(user))
-            let filteredUser = readPermission.filter(JSON.parse(JSON.stringify(user)))
-            // console.log("Filtered User: " + JSON.stringify(filteredUser))
-            req.app.io.sockets.emit('user-updated', filteredUser)
-            res.status(201).send({msg: "Successfully updated user", user: filteredUser});
-          });
+              } else {
+                // save to s3 with same bucket, key
+                var objectParams = {Bucket: image.bucket, Key: image.key, Body: req.file.buffer, ACL: "public-read"}
+                s3.putObject(objectParams, function(err, data){
+                  if(err) {
+                    console.dir(err)
+                    res.status(400).send({message: "failed to upload avatar"});
+                    Image.deleteOne({_id: newImage._id},function(err){
+                      if(err) {
+                        console.dir(err)
+                        res.status(401).send(err)
+                      } else {
+                        res.status(401).send({ message: "Failed to upload image. ImageModel rolledback"})
+                      }
+                    })
+                  } else {
+                    console.dir(data)
+                    console.log("Successfully uploaded data to ascendtrading/avatars/" + req.file.originalname)
+                    filteredUpdates.avatar = newImage._id
+                    console.dir(filteredUpdates)
+                    User.findOneAndUpdate({_id: req.params.userId}, filteredUpdates, {new: true})
+                    .populate({path: 'avatar'})
+                    .exec(function(err, user) {
+                      if (err){
+                        res.status(401).send(err)
+                      } else {
+                        // console.log("Updated User: " + JSON.stringify(user))
+                        let filteredUser = readPermission.filter(JSON.parse(JSON.stringify(user)))
+
+                        // console.log("Filtered User: " + JSON.stringify(filteredUser))
+                        req.app.io.sockets.emit('user-updated', filteredUser)
+                        res.status(201).send({msg: "Successfully updated user", user: filteredUser});
+                      }
+                    })
+                  }
+                })
+                // save the etag to the imageModel on success
+                // else rollback newImage
+                }
+              })
+          } else {
+            // No Avatar uploaded, just update the user
+            // console.log("Filtered User: " + JSON.stringify(filteredUpdates))
+            User.findOneAndUpdate({_id: req.params.userId}, filteredUpdates, {new: true}, function(err, user) {
+              if (err)
+                  res.status(401).send(err)
+              // console.log("Updated User: " + JSON.stringify(user))
+              let filteredUser = readPermission.filter(JSON.parse(JSON.stringify(user)))
+              // console.log("Filtered User: " + JSON.stringify(filteredUser))
+              req.app.io.sockets.emit('user-updated', filteredUser)
+              res.status(201).send({msg: "Successfully updated user", user: filteredUser});
+            });
+          }
         } else {
           res.status(401).send({err: "Invalid password"})
         }
@@ -521,7 +585,11 @@ exports.updateUser = function(req, res) {
     } else {
       console.log("Updating Any User")
       let filteredUpdates = updatePermission.filter(req.body)
-      // console.log("Filtered User: " + JSON.stringify(filteredUpdates))
+      console.log("Filtered User: " + JSON.stringify(filteredUpdates))
+      // handle uploading new avatar
+      if(req.file != undefined){
+        console.log("Time to create a new ImageModel")
+      }
       User.findOneAndUpdate({_id: req.params.userId}, filteredUpdates, {new: true}, function(err, user) {
         if (err)
             res.status(401).send({err: err})

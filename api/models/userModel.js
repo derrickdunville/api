@@ -31,7 +31,8 @@ let userSchema = new Schema({
   stripe_acct_id: { type: String, default: null },
   transactions: [{ type: Schema.Types.ObjectId, ref: 'Transaction' }],
   subscriptions: [{ type: Schema.Types.ObjectId, ref: 'Subscription' }],
-  referred_by: { type: Schema.Types.ObjectId, ref: 'User'}
+  referred_by: { type: Schema.Types.ObjectId, ref: 'User'},
+  avatar: {type: Schema.Types.ObjectId, ref: 'Image'}
 });
 
 // methods ======================

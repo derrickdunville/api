@@ -6,6 +6,7 @@ let express = require('express'),
     MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost/ascend_trading',
     mongoose = require('mongoose'),
     bodyParser = require('body-parser'),
+    formidable = require('express-formidable')
     // LocalStrategy = require('passport-local').Strategy,
     cors = require('cors'),
 
@@ -16,6 +17,7 @@ let express = require('express'),
     Product = require('./api/models/productModel'),
     Subscription = require('./api/models/subscriptionModel'),
     Click = require('./api/models/clickModel'),
+    Image = require('./api/models/imageModel'),
 
 
     //Routes
@@ -35,6 +37,7 @@ let express = require('express'),
 
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json())
+// app.use(formidable())
 app.use(function(req, res, next) {
     res.setHeader('Access-Control-Allow-Origin', '*')
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST')
