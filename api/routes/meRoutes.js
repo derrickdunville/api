@@ -14,6 +14,22 @@ module.exports = function(app) {
        * @apiError Unauthorized user is unauthorized
        */
       .get(authService.ensureAuthorized, meController.me)
+    app.route('/@me/payment_method')
+      /**
+       * @api {post} /@me/payment_method
+       * @apiGroup @me
+       * @apiSuccess {JSON} User me
+       * @apiError Unauthorized user is unauthorized
+       */
+      .put(authService.ensureAuthorized, meController.updateMyPaymentMethod)
+      /**
+       * @api {get} /@me/payment_method
+       * @apiGroup @me
+       * @apiSuccess {JSON} User me
+       * @apiError Unauthorized user is unauthorized
+       */
+      .get(authService.ensureAuthorized, meController.myPaymentMethod)
+
     app.route('/@me/referrals')
       /**
        * @api {get} /@me/referrals

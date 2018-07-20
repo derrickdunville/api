@@ -14,6 +14,7 @@ exports.me = function(req, res) {
     console.log("Getting me...")
     res.status(200).send(req.user);
 };
+
 exports.myReferrals = function(req, res) {
     let query = User.find({referred_by: req.user._id}, 'username created_at')
     query.exec(function(err, users) {
@@ -258,6 +259,82 @@ exports.updateBankAccount = function(req, res) {
         console.log("STRIPE - external account updated")
         console.dir(account)
         res.status(201).send(account)
+      }
+    }).catch(function(error) {
+      console.log(error);
+      res.status(500).send({err: error})
+    })
+  }
+}
+exports.myPaymentMethod = function(req, res){
+  console.log("Getting Payment Method...")
+  console.dir(req.body)
+  // how do we handle updating payment method for connect customers
+  if(req.user.stripe_cus_id == null){
+    res.status(401).send({err: "No stripe account to add payment method to"})
+  } else {
+    stripe.customers.retrieve(req.user.stripe_cus_id, function(err, customer){
+      if(err){
+        console.log("STRIPE - ERROR")
+        console.dir(err)
+        res.status(400).send({err: err})
+      } else {
+        console.log("STRIPE - customer retieved")
+        console.dir(customer)
+        stripe.customers.retrieveCard(
+          customer.id,
+          customer.default_source,
+          function(err, card) {
+            if(err){
+              console.log("STRIPE - ERROR getting default source")
+              console.dir(err)
+              res.status(400).send({err: err})
+            } else {
+              console.log("STRIPE - default source loaded")
+              console.dir(card)
+              res.status(200).send(card)
+            }
+          }
+        );
+      }
+    }).catch(function(error) {
+      console.log(error);
+      res.status(500).send({err: error})
+    })
+  }
+}
+exports.updateMyPaymentMethod = function(req, res){
+  console.log("Updating Payment Method...")
+  console.dir(req.body)
+  // how do we handle updating payment method for connect customers
+  if(req.user.stripe_cus_id == null){
+    res.status(401).send({err: "No stripe account to add payment method to"})
+  } else {
+    stripe.customers.update(req.user.stripe_cus_id, {
+        source: req.body.stripe_source_token
+      }).then(function(customer, err){
+      if(err){
+        console.log("STRIPE - ERROR")
+        console.dir(err)
+        res.status(400).send({err: err})
+      } else {
+        console.log("STRIPE - default source updated")
+        console.dir(customer)
+        stripe.customers.retrieveCard(
+          customer.id,
+          customer.default_source,
+          function(err, card) {
+            if(err){
+              console.log("STRIPE - ERROR getting default source")
+              console.dir(err)
+              res.status(400).send({err: err})
+            } else {
+              console.log("STRIPE - default source updated")
+              console.dir(card)
+              res.status(201).send(card)
+            }
+          }
+        );
       }
     }).catch(function(error) {
       console.log(error);
