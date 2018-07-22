@@ -481,6 +481,12 @@ exports.updateUser = function(req, res) {
   if(req.file != undefined){
     console.dir(req.file)
   }
+  // // Validate Email Field if present
+  if(req.body.user.email != undefined){
+    if(req.body.user.email == req.user.email){
+      delete req.body.user.email
+    }
+  }
 
   // First check if the current users roles can update "ANY" user
   let updatePermission = ac.can(req.user.roles).updateAny('user')
@@ -511,7 +517,6 @@ exports.updateUser = function(req, res) {
           }
           let filteredUpdates = updatePermission.filter(user)
 
-
           // handle uploading new avatar
           if(req.file != undefined){
             console.log("Time to create a new ImageModel")
@@ -523,7 +528,7 @@ exports.updateUser = function(req, res) {
             newImage.save(function (err, image) {
               if (err) {
                 console.log("Error creating avatar ImageModel!")
-                res.status(401).send(err)
+                res.status(401).send({err: err})
               } else {
                 // save to s3 with same bucket, key
                 var objectParams = {Bucket: image.bucket, Key: image.key, Body: req.file.buffer, ACL: "public-read"}
@@ -543,12 +548,15 @@ exports.updateUser = function(req, res) {
                     console.dir(data)
                     console.log("Successfully uploaded data to ascendtrading/avatars/" + req.file.originalname)
                     filteredUpdates.avatar = newImage._id
+                    console.log("filteredUpdates: ")
                     console.dir(filteredUpdates)
-                    User.findOneAndUpdate({_id: req.params.userId}, filteredUpdates, {new: true})
+                    User.findOneAndUpdate({_id: req.params.userId}, filteredUpdates, {runValidators: true, context: 'query', new: true})
                     .populate({path: 'avatar'})
                     .exec(function(err, user) {
                       if (err){
-                        res.status(401).send(err)
+                        console.log("find and update user with image")
+                        console.dir(err)
+                        res.status(401).send({err: err})
                       } else {
                         // console.log("Updated User: " + JSON.stringify(user))
                         let filteredUser = readPermission.filter(JSON.parse(JSON.stringify(user)))
@@ -560,25 +568,29 @@ exports.updateUser = function(req, res) {
                     })
                   }
                 })
-                // save the etag to the imageModel on success
-                // else rollback newImage
-                }
-              })
+              // save the etag to the imageModel on success
+              // else rollback newImage
+              }
+            })
           } else {
             // No Avatar uploaded, just update the user
             // console.log("Filtered User: " + JSON.stringify(filteredUpdates))
-            User.findOneAndUpdate({_id: req.params.userId}, filteredUpdates, {new: true}, function(err, user) {
+            User.findOneAndUpdate({_id: req.params.userId}, filteredUpdates, {runValidators: true, context: 'query', new: true})
+            .populate({path: 'avatar'})
+            .exec(function(err, user) {
               if (err)
-                  res.status(401).send(err)
-              // console.log("Updated User: " + JSON.stringify(user))
-              let filteredUser = readPermission.filter(JSON.parse(JSON.stringify(user)))
-              // console.log("Filtered User: " + JSON.stringify(filteredUser))
-              req.app.io.sockets.emit('user-updated', filteredUser)
-              res.status(201).send({msg: "Successfully updated user", user: filteredUser});
+                  res.status(401).send({err: err})
+              else {
+                // console.log("Updated User: " + JSON.stringify(user))
+                let filteredUser = readPermission.filter(JSON.parse(JSON.stringify(user)))
+                // console.log("Filtered User: " + JSON.stringify(filteredUser))
+                req.app.io.sockets.emit('user-updated', filteredUser)
+                res.status(201).send({msg: "Successfully updated user", user: filteredUser});
+              }
             });
           }
         } else {
-          res.status(401).send({err: "Invalid password"})
+          res.status(401).send({err: { errors : { password: { message:  "Invalid password"}}}})
         }
       }
     // Updating any - can skip password
