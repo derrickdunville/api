@@ -14,6 +14,14 @@ module.exports = function(app) {
        * @apiError Unauthorized user is unauthorized
        */
       .get(authService.ensureAuthorized, meController.me)
+    app.route('/@me/discord_roles')
+      /**
+       * @api {get} /@me/discord_roles
+       * @apiGroup @me
+       * @apiSuccess {JSON} User me
+       * @apiError Unauthorized user is unauthorized
+       */
+      .get(authService.ensureAuthorized, meController.myDiscordRoles)
     app.route('/@me/payment_method')
       /**
        * @api {post} /@me/payment_method

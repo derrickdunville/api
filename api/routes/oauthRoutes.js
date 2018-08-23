@@ -1,6 +1,7 @@
 'use strict';
 module.exports = function(app) {
-    let oauthController = require('../controllers/oauthController'),
+    let authService = require('../helpers/authService'),
+        oauthController = require('../controllers/oauthController'),
         config  = require('../config')
 
     // users Routes
@@ -35,4 +36,17 @@ module.exports = function(app) {
          */
         // .get(userController.ensureAuthorized, userController.listUsers)
         .post(oauthController.revokeOAuth)
+
+    // users Routes
+    app.route('/oauth/discord/join')
+        /**
+         * @api {post} /oauth/discord/join Joins the user to the discord guild
+         * @apiGroup OAuth
+         * @apiSuccess 200
+         * @apiError Unauthorized user is unauthorized
+         */
+        // .get(userController.ensureAuthorized, userController.listUsers)
+        .put(authService.ensureAuthorized, oauthController.joinDiscordGuild)
+
+
 };

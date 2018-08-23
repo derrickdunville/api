@@ -1,7 +1,8 @@
 'use strict';
 module.exports = function(app) {
 
-    let transactionController  = require('../controllers/transactionController'),
+    let authService = require('../helpers/authService'),
+        transactionController  = require('../controllers/transactionController'),
         config                = require('../config')
 
     // transactions Routes
@@ -22,7 +23,7 @@ module.exports = function(app) {
          * @apiSuccess {JSON} Transactions object
          * @apiError Unauthorized user is unauthorized
          */
-        .post(transactionController.createTransaction)
+        .post(authService.ensureAuthorized, transactionController.createTransaction)
 
     app.route('/transactions/:transactionId')
         /**

@@ -5,8 +5,9 @@ var transactions = require('./transactions')
 
 let mongo = process.env.MONGODB_URI || 'mongodb://localhost/ascend_trading'
 // Connect to MongoDB via Mongoose
-seeder.connect(mongo, function() {
+seeder.connect(mongo, async function() {
 
+  let data = await populateData()
   // Load Mongoose models
   seeder.loadModels([
     '../api/models/userModel.js',
@@ -27,12 +28,13 @@ seeder.connect(mongo, function() {
   })
 })
 
+async function populateData(){
+  var data = []
+  data.push(await users.seedUsers())
+  // transactionSeeds = transactions.seedTransactions(userSeeds, [])
+  data.push(await products.seedProducts())
 
-var data = []
-userSeeds = users.seedUsers()
-productSeeds = products.seedProducts()
-// transactionSeeds = transactions.seedTransactions(userSeeds, [])
+  return data
+}
 
-data.push(userSeeds)
-// data.push(productSeeds)
 // data.push(transactionSeeds)

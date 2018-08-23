@@ -1,8 +1,10 @@
 'use strict';
 module.exports = function(app) {
-
-    let productController  = require('../controllers/productController'),
-        config                = require('../config')
+    let authService = require('../helpers/authService'),
+        productController  = require('../controllers/productController'),
+        config = require('../config'),
+        multer = require('multer'),
+        upload = multer()
 
     // products Routes
     app.route('/products')
@@ -22,7 +24,8 @@ module.exports = function(app) {
          * @apiSuccess {JSON} Products object
          * @apiError Unauthorized user is unauthorized
          */
-        .post(productController.createProduct)
+        //.post(authService.ensureAuthorized, upload.fields([{name: 'cover_image', maxCount: 1}, {name: 'uploaded_file', maxCount: 1}]), productController.createProduct)
+        .post(upload.fields([{name: 'cover_image', maxCount: 1}, {name: 'uploaded_file', maxCount: 1}]), productController.createProduct)
 
     app.route('/products/:productId')
         /**

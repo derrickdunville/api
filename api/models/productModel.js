@@ -44,8 +44,12 @@ var productSchema = new Schema({
       enum: ['days', 'weeks', 'months', 'years'],
   },
   stripe_plan_id: { type: String },
+  discord_role_id: { type: String },
   create_date: { type: Date, default: Date.now },
-  end_date: { type: Date }
+  end_date: { type: Date },
+
+  cover_image: { type: Schema.Types.ObjectId, ref: 'Image', default: null },
+  file: { type: Schema.Types.ObjectId, ref: 'S3File', default: null }
 })
 
 productSchema.plugin(mongoosePaginate);

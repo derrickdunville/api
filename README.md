@@ -35,8 +35,8 @@ export API_BASE_URL=http://localhost:3000/
 export MONGODB_URI=mongodb://localhost/ascend_trading
 export DISCORD_CLIENT_ID=406318468703584266
 export DISCORD_CLIENT_SECRET=Nu7ZKYZOijTlsdd6fZS1Iz3KGBBI8Vrk
-export DISCORD_CALLBACK=https://afe19ecd.ngrok.io/oauth/discord/callback
-export REDIRECT_URI=http://localhost:8080/
+export DISCORD_CALLBACK=https://ascendtrading.ngrok.io/oauth/discord/callback
+export REDIRECT_URI=http://localhost:8080/account/connections
 export STRIPE_PUBLISHABLE_KEY=pk_test_1u5ImR375vh3iwVcWfdaPtJk
 export STRIPE_PRIVATE_KEY=sk_test_K3Ol21vL7fiVAUDcp8MnOAYT
 ```
@@ -100,6 +100,14 @@ mongo                                 //5. Start mongo console.
 ```
 
 ## ngrok
+To run ngrok tunnel on ubuntu
+```
+$ ngrok http -subdomain=ascendtrading 3000
+```
+OAUTH methods require a webhook url. We tunnel webhooks using ngrok
+`https://ascendtrading.ngrok.io/oauth/<app>/callback`
+We save these URLs in environment vars.
+https://ascendtrading.ngrok.io/stripe/callback
 
 ## Heroku
 Heroku is setup with automated deployments for the master branch.
@@ -111,11 +119,17 @@ S3 Bucket: ascendtrading
 
 ## Start the API
 Start the mongodb server
-```C:\Program Files\MongoDB\Server\3.4\bin>mongod.exe```
+```
+C:\Program Files\MongoDB\Server\3.4\bin>mongod.exe
+```
 
 Start the node server
-```node server.js or nmp start```
+```
+node server.js or nmp start
+```
 
 ## Testing the API
 Run the mocha & chai test scripts
-```npm test```
+```
+npm test
+```

@@ -14,7 +14,51 @@ exports.me = function(req, res) {
     console.log("Getting me...")
     res.status(200).send(req.user);
 };
+exports.myDiscordRoles = function(req, res){
+  console.log("getting my roles...")
+  // let user = User.findOne({_id: req.user._id})
+  //   .populate({
+  //     path: 'transactions',
+  //     populate: {
+  //       path: 'product',
+  //       match: { category: 'membership' },
+  //       select: 'discord_role_id'
+  //     },
+  //     match: {
+  //       expires_at: { $gte: new Date()},
+  //       status: 'succeeded'
+  //     },
+  //     select: 'product'
+  //   })
+  //   .select('transactions')
+  //   .exec(function(err, user) {
+  //     if(err){
+  //       res.status(500).send()
+  //     } else {
+  //       let roles = []
+  //       for(let i = 0; i < user.transactions.length; ++i){
+  //         if(user.transactions[i].product.discord_role_id){
+  //           roles.push(user.transactions[i].product.discord_role_id)
+  //         }
+  //       }
+  //       res.status(200).send({roles: roles});
+  //     }
+  //   })
 
+  User.findOne({_id: req.user._id})
+    .exec(function(err, user){
+      if(err){
+        res.status(500).send()
+      } else {
+        let roles = user.getDiscordRoles()
+        roles.then(roles => {
+          console.log("roles: ")
+          console.dir(roles)
+          res.status(200).send({roles: roles})
+        })
+      }
+    })
+}
 exports.myReferrals = function(req, res) {
     let query = User.find({referred_by: req.user._id}, 'username created_at')
     query.exec(function(err, users) {

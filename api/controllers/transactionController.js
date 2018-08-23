@@ -131,32 +131,162 @@ exports.listTransactions = function(req, res) {
 
 exports.createTransaction = function(req, res) {
 
-  // Only admin should be allowed to create transactions
-  // console.log("Creating transaction...");
-  // console.log("Request Body: " + req.body);
-  // if(!req.body.username || !req.body.password || !req.body.email) {
-  //     res.status(400).send({err: "Must provide username, password, and email"});
-  // } else {
-
-  // Error check the request body
-  let newTransaction = new Transaction(req.body);
-  newTransaction.save(function (err, transaction) {
-      if (err) {
-        // console.log("Error creating transaction!");
-        res.status(401).send(err)
-      } else {
-          // console.log("Transaction created" + transaction);
-          // Push the new transaction onto the users transaction list
+  /* Scenarios:
+  *   1) Transactions is being created by an admin for someone else
+  *       - If transaction has an amount > 0
+  *   2) Transaction is being created by a user for themselves
+  */
+  // Users can only create transactions for themselves for non-subscription products
+  // they only need to send the list of product ids.
+  let requestedProduct = req.body.product
+  // console.log('requested product id: ' + requestedProduct)
+  // how to tell if the transation is by an Admin or everyone
+  if(req.user.roles.includes('admin') &&
+      req.body.hasOwnProperty('user') &&
+      req.body.user != req.user._id){
+    // if the user is an admin and the user property doesn not equal the admins user._id,
+    // they must be creating for someone else
+    // console.log('user is an admin creating for someone else')
+    waterfall([
+      function(done){
+        // check if the user id exists
+        User.findOne({_id: req.body.user})
+        .then(user => {
+          if(user != null){
+            done(null, user)
+          } else {
+            done({res_code: 400, err: {message:"invalid user id"}})
+          }
+        }).catch(err => {
+          done(err)
+        })
+      },
+      function(user, done){
+        // chek if the product id exists
+        Product.findOne({_id: req.body.product})
+        .then(product => {
+          if(product != null){
+            done(null, user, product)
+          } else {
+            done({res_code: 400, err: {message: "invalid product id"}})
+          }
+        }).catch(err => {
+          done(err)
+        })
+      },
+      function(user, product, done){
+        let newTransaction = new Transaction(req.body);
+        newTransaction.save()
+        .then(transaction => {
+          // push the new transaction onto the users transaction list
           User.findByIdAndUpdate(transaction.user, {$push: {transactions: transaction}}, {new: true}, function(err, user){
             if(err){
               res.status(401).send(err)
             } else {
+              // console.dir(transaction)
               res.status(201).json(transaction)
             }
           })
-      }
-  });
-  // }
+        }).catch(err => {
+          // console.log("Error creating transaction!");
+          done(err)
+        })
+      }],
+      function(err){
+        if(err.hasOwnProperty('res_code')){
+          res.status(err.res_code).send({err: err.err})
+        } else {
+          // console.dir(err)
+          res.status(500).send({err: err})
+        }
+      })
+  } else {
+    // if the user is not an admin, they musr be creating for themself
+    // console.log('user is not an admin')
+    waterfall([
+      function(done){
+        // verify the product id
+        Product.findOne({_id: requestedProduct})
+        .then(product => {
+          if(product == null){
+            done({ message: 'product id not found' })
+          } else {
+            // console.log("product found... next")
+            // console.dir(product)
+            done(null, product)
+          }
+        }).catch(err => {
+          // console.log("error looking up product")
+          done(err)
+        })
+      },
+      function(product, done){
+        // validate that the user can purchase this product
+        // if the user has a paid transaction containing the requested product._id
+        // then they can NOT purchase this product again
+        Transaction.find({user: req.user._id, product: product._id})
+        .populate({
+          path: 'product',
+          match: { interval: 'one-time' }
+        })
+        .then(async (transactions) => {
+          if(transactions.length > 0){
+            // console.log("transaction: " + transactions.length)
+            // console.dir(JSON.parse(JSON.stringify(transactions)))
+            // console.log("looks like this user has already purchased this one-time product")
+            res.status(403).send({err: {message: "user has already purchased this product"}})
+          } else {
+            // the user has not purchased the requested product and we are ok
+            // to create the new transactions
+            let newTransaction = new Transaction({
+              user: req.user._id,
+              product: product._id,
+              amount: product.amount,
+              total: product.amount
+            })
+
+            // STRIPE:
+            // Was the user referred by another user?
+            // Check if the user has a stripe_cus_id
+            // if not create one for them
+            let charge = await stripe.charges.create({
+              customer: req.user.stripe_cus_id,
+              amount: product.amount,
+              currency: 'usd',
+              description: 'Charge for ' + product.name,
+              metadata: {
+                product_id: product._id.toString(),
+                product_name: product.name
+              }
+            })
+            // might need to error check the charge here
+            // console.dir(charge)
+            newTransaction.trans_num = charge.id
+            newTransaction.save().then(transaction => {
+              // console.log("transaction created: ")
+              // console.dir(JSON.parse(JSON.stringify(transaction)))
+              User.findByIdAndUpdate(transaction.user, {$push: {transactions: transaction}}, {new: true})
+              .then(user => {
+                res.status(201).send(transaction)
+              }).catch(err => {
+                // console.log("sonething went wrong pushing the transaction onto the user")
+                done(err)
+              })
+            }).catch(err => {
+              // console.log("something went wrong creating the transaction")
+              done(err)
+            })
+          }
+        }).catch(err => {
+          // console.log("error looking up user transactions", err)
+          done(err)
+        })
+      }],
+      function(err){
+        // console.dir(err)
+        res.status(500).send({err: err})
+      })
+  }
 };
 
 exports.readTransaction = function(req, res) {

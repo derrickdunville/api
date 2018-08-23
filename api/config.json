@@ -1,3 +1,4 @@
 {
-    "secretKey": "ascend_trading_api"
+    "secretKey": "ascend_trading_api",
+    "discord_guild_id": "353342769630281738"
 }

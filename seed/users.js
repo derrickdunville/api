@@ -1,11 +1,14 @@
 let faker = require('faker')
 let utils = require('./utils')
+let stripe = require("stripe")("sk_test_K3Ol21vL7fiVAUDcp8MnOAYT");
 
-exports.seedUsers= function(){
+exports.seedUsers = async function(){
 
   let documents = []
 
   let model = "User"
+
+  // Admin with stripe_cus_id
   let derrick =
     {
       _id: '5a6a572368cb6852a68a83d4',
@@ -14,7 +17,14 @@ exports.seedUsers= function(){
       email: 'dev@ascendtrading.net',
       roles: ['admin']
     }
+  let derrick_stripe_cus = await stripe.customers.create({
+      source: 'tok_visa',
+      email: derrick.email
+    })
+  derrick.stripe_cus_id = derrick_stripe_cus.id
   documents.push(derrick)
+
+  // Everone with stripe_cus_id
   let frank =
     {
       _id: '5a6a572368cb6852a68a83d5',
@@ -23,6 +33,11 @@ exports.seedUsers= function(){
       email: 'frank@ascendtrading.net',
       roles: ['everyone']
     }
+  let frank_stripe_cus = await stripe.customers.create({
+      source: 'tok_visa',
+      email: frank.email
+    })
+  frank.stripe_cus_id = frank_stripe_cus.id
   documents.push(frank)
 
   // let number_of_seeds = 60

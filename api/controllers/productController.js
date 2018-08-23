@@ -2,13 +2,15 @@ let mongoose      = require('mongoose'),
     mongodb       = require('mongodb'),
     config        = require('../config'),
     _             = require('lodash'),
+    path          = require('path'),
     jwt           = require('jsonwebtoken'),
     ejwt          = require('express-jwt'),
     waterfall     = require('async-waterfall'),
     AccessControl = require('accesscontrol'),
     stripe        = require('stripe')("sk_test_K3Ol21vL7fiVAUDcp8MnOAYT"),
-    Product       = mongoose.model('Product')
-
+    Product       = mongoose.model('Product'),
+    AWS       = require('aws-sdk'),
+    s3        = new AWS.S3({apiVersion: '2006-03-01', region: 'us-east-1'});
 //
 // let grants = {
 //     admin: {
@@ -92,7 +94,7 @@ exports.listProducts = function(req, res) {
     // } else {
     //     res.status(400).send({err: "You are not authorized to view all users"});
     // }
-
+    options.populate = ['file', 'cover_image']
     Product.paginate(query, options, function(err, products) {
       if(err){
         console.log(err)
@@ -120,54 +122,119 @@ exports.createProduct = function(req, res) {
 
   // Only admin should be allowed to create products
   // console.log("Creating product...");
-  console.log("Request Body: ");
+  console.log("Request Body: ")
   console.dir(req.body)
+  let product = JSON.parse(req.body.product)
+  console.log("Files: ")
+  console.dir(req.files)
   // if(!req.body.username || !req.body.password || !req.body.email) {
   //     res.status(400).send({err: "Must provide username, password, and email"});
   // } else {
 
-  // Error check the request body
-  let newProduct = new Product(req.body);
+  waterfall([
+    function(done){
+      // upload the files to s3 and create a S3File/Image model
+      if(req.files['cover_image'] != undefined){
+        let cover_image = req.files['cover_image'][0] // only 1 in the list
+        let newImage = new Image({
+          bucket: "ascendtrading/products/cover", // should be a config var
+          key: cover_image.originalname,
+          image_ext: path.extname(cover_image.originalname)
+        })
+        let objectParams = {Bucket: newImage.bucket, Key: newImage.key, Body: cover_image.buffer, ACL: "public-read"}
+        s3.putObject(objectParams, function(err, data){
+          if(err){
+            done(err)
+          } else {
+            newImage.etag = data.etag
+            newImage.save().then(image => {
+              done(null, image)
+            }).catch(err => {
+              done(err)
+            })
+          }
+        })
+      } else {
+        // no cover image, move on
+        done(null, null)
+      }
+    },
+    function(coverImage, done){
+      if(req.files['uploaded_file'] != undefined){
+        // console.dir(req.files['uploaded_file'][0])
+        let uploaded_file = req.files['uploaded_file'][0] // only 1 in the list
+        let newS3File = new S3File({
+          bucket: "ascendtrading/products/files", // should be a config var
+          key: uploaded_file.originalname,
+          file_ext: path.extname(uploaded_file.originalname)
+        })
+        let objectParams = {Bucket: newS3File.bucket, Key: newS3File.key, Body: uploaded_file.buffer, ACL: "public-read"}
+        s3.putObject(objectParams, function(err, data){
+          if(err){
+            done(err)
+          } else {
+            newS3File.etag = data.etag
+            newS3File.save().then(s3File => {
+              console.log("file saved")
+              done(null, s3File, coverImage)
+            }).catch(err => {
+              done(err)
+            })
+          }
+        })
+      } else {
+        done(null, null, coverImage)
+      }
+    },
+    function(uploadedFile, coverImage, done){
 
-    // Create the equivalent stripe plan if not one-time
-  if (newProduct.interval !== 'one-time') {
-    console.log("Creating stripe plan...");
-    stripe.plans.create({
-      amount: Math.round(newProduct.amount * 100),
-      interval: newProduct.interval,
-      name: newProduct.name,
-      currency: newProduct.currency
-    }, function(err, plan) {
-        if (err) {
-          console.log(err);
-          res.status(401).send(err)
-        } else {
-          console.log(plan);
+      // TODO: Error check the request body
+      let newProduct = new Product(product);
+      // add the file and cover image to the product
+      newProduct.cover_image = coverImage
+      newProduct.file = uploadedFile
+      console.log("creating product")
+
+      // STRIPE: We may need to create a plan on stripe to attach to this new
+      // product. If the product is not "one-time" we need to create a plan on stripe
+      if (newProduct.interval !== 'one-time') {
+        console.log("Creating stripe plan...");
+        stripe.plans.create({
+          amount: Math.round(newProduct.amount * 100),
+          interval: newProduct.interval,
+          name: newProduct.name,
+          currency: newProduct.currency
+        }).then(plan => {
+          console.log("plan created")
+          console.dir(plan);
           newProduct.stripe_plan_id = plan.id
-          console.log("Saving product...");
-          newProduct.save(function (err, product) {
-              if (err) {
-                  console.log("Error creating product!");
-                  res.status(401).send(err)
-              } else {
-                  console.log("Product created" + product);
-                  res.status(201).json(product)
-              }
-          })
-        }
-    })
-  } else {
-    console.log("Saving product...");
-    newProduct.save(function (err, product) {
-        if (err) {
-            // console.log("Error creating product!");
-            res.status(401).send(err)
-        } else {
-            // console.log("Product created" + product);
+          let savedProduct = newProduct.save()
+          savedProduct.then(product => {
+            console.log("Product created" + product);
             res.status(201).json(product)
-        }
-    })
-  }
+          }).catch(err => {
+            console.log("Error creating product!");
+            done(err)
+          })
+        }).catch(err => {
+          console.error(err)
+          done(err)
+        })
+      } else {
+        console.log("Saving product...");
+        let savedProduct = newProduct.save()
+        savedProduct.then(product => {
+          res.status(201).json(product)
+        }).catch(err => {
+          done(err)
+        })
+      }
+    }
+  ],
+  function(err){
+    console.error(err)
+    res.status(400).send(err) // BAD REQUEST
+  })
 };
 
 exports.readProduct = function(req, res) {

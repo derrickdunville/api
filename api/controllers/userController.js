@@ -551,6 +551,8 @@ exports.updateUser = function(req, res) {
                     console.log("filteredUpdates: ")
                     console.dir(filteredUpdates)
                     User.findOneAndUpdate({_id: req.params.userId}, filteredUpdates, {runValidators: true, context: 'query', new: true})
+                    .populate({path: 'subscriptions', populate: {path: 'product'}, match: { status: "active" }})
+                    .populate({path: 'transactions', populate: {path: 'product'}})
                     .populate({path: 'avatar'})
                     .exec(function(err, user) {
                       if (err){
@@ -576,6 +578,8 @@ exports.updateUser = function(req, res) {
             // No Avatar uploaded, just update the user
             // console.log("Filtered User: " + JSON.stringify(filteredUpdates))
             User.findOneAndUpdate({_id: req.params.userId}, filteredUpdates, {runValidators: true, context: 'query', new: true})
+            .populate({path: 'subscriptions', populate: {path: 'product'}, match: { status: "active" }})
+            .populate({path: 'transactions', populate: {path: 'product'}})
             .populate({path: 'avatar'})
             .exec(function(err, user) {
               if (err)

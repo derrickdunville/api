@@ -18,7 +18,7 @@ let express = require('express'),
     Subscription = require('./api/models/subscriptionModel'),
     Click = require('./api/models/clickModel'),
     Image = require('./api/models/imageModel'),
-
+    S3File = require('./api/models/s3FileModel'),
 
     //Routes
     meRoutes = require('./api/routes/meRoutes'),

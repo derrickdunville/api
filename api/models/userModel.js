@@ -12,7 +12,6 @@ function toLower(v) {
 }
 
 function validateEmail(email){
-  console.log("validating email...("+email+")")
   return /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(email);
 };
 
@@ -68,8 +67,49 @@ userSchema.methods.validPassword = function(password) {
     return bcrypt.compareSync(password, this.password);
 };
 
+userSchema.methods.getDiscordRoles = function(err, cb){
+  console.log("getting discord roles")
+
+  const transactions =
+    this.model('User')
+    .findOne({_id: this._id})
+    .populate({
+      path: 'transactions',
+      populate: {
+        path: 'product',
+        match: { category: 'membership' },
+        select: 'discord_role_id -_id'
+      },
+      match: {
+        expires_at: { $gte: new Date()},
+        status: 'succeeded'
+      },
+      select: 'product -_id'
+    })
+    .select('transactions -_id')
+    .exec()
+
+    return transactions.then(result => {
+      console.log("processing roles from transactions")
+      let parsedUser = (JSON.parse(JSON.stringify(result)))
+      console.dir(parsedUser)
+      let roles = []
+      for(let i = 0; i < parsedUser.transactions.length; ++i){
+        if(parsedUser.transactions[i].product.discord_role_id){
+          console.log(parsedUser.transactions[i].product.discord_role_id)
+          roles.push(parsedUser.transactions[i].product.discord_role_id)
+        }
+      }
+      console.dir(roles)
+      return roles
+    }).catch(err => {
+      console.log("an error occurred getting discord roles", err)
+      return []
+    })
+    console.log("shouldnt get here")
+}
+
 userSchema.plugin(mongoosePaginate);
 userSchema.plugin(uniqueValidator, { message: 'already exists' });
-
 
 module.exports = mongoose.model('User', userSchema);

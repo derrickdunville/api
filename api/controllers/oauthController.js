@@ -4,7 +4,8 @@ let mongoose  = require('mongoose'),
     _         = require('lodash'),
     User      = mongoose.model('User'),
     waterfall = require('async-waterfall'),
-    crypto    = require('crypto')
+    crypto    = require('crypto'),
+    config    = require('../config')
 
 
 const CLIENT_ID = process.env.DISCORD_CLIENT_ID;
@@ -14,6 +15,7 @@ const REDIRECT_URI = process.env.REDIRECT_URI;
 const btoa = require('btoa');
 const { catchAsync } = require('../utils');
 const redirect = encodeURIComponent(DISCORD_CALLBACK);
+const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
 const fetch = require('node-fetch');
 
 exports.createOAuthState = function(req, res) {
@@ -145,3 +147,64 @@ exports.revokeOAuth = catchAsync(async (req, res) => {
     res.status(401).send({err: json.error_description})
   }
 })
+
+exports.joinDiscordGuild = function(req, res) {
+
+  User.findOne({_id: req.user._id}).exec().then(user => {
+    let roles = user.getDiscordRoles()
+    roles.then(roles => {
+      console.dir("roles:", roles)
+      const current_date = new Date()
+      if(req.user.discordAccessToken == null || req.user.discordAccessTokenExpires.getTime() < current_date.getTime()){
+        res.status(401).send({err: "Invalid Token - Error" })
+      } else {
+        // Derive the users discord role from their transactions
+        // We need to
+        // select the discord role ids of where product.category are 'memberhip'
+        // where transaction.expiration_date is in the future.
+
+
+        // DISCORD API CALL - adding the user to the guild
+        const response = fetch(`https://discordapp.com/api/guilds/${config.discord_guild_id}/members/${req.user.discordId}`,
+          {
+            method: 'PUT',
+            headers: {
+              'Authorization': `Bot ${DISCORD_BOT_TOKEN}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              access_token: req.user.discordAccessToken,
+              roles: roles
+            })
+          })
+        response.then(response => {
+          if(response.status === 201){
+            console.log("Successfully Added "+ req.user.username +"/"+req.user.discordUsername+"#"+req.user.discordDiscriminator+" to Guild")
+            const discord_guild_member = response.json()
+            discord_guild_member.then(json => {
+              res.status(201).send({ discord_guild_member: json})
+            })
+          } else if(response.status === 204){
+            console.log(req.user.username +"/"+req.user.discordUsername+"#"+req.user.discordDiscriminator+" is already in the Guild")
+            // 204 comes back when the user is already in the guild
+            // so get just get the guild member and return it as if they joined successfully
+            res.status(201).send({})
+          } else {
+            const json = response.json()
+            json.then(json => {
+              console.log("Something went wrong trying to join the discord guild...")
+              console.dir(json)
+              res.status(401).send({err: "Something went wrong trying to join the discord guild"})
+            })
+          }
+        })
+      }
+    }).catch(err => {
+      console.log("error occurred getting discord roles", err)
+      res.status(401).send({err: "error occurred getting discord roles"})
+    })
+  }).catch(err => {
+    console.log("error occurred getting user", err)
+    res.status(401).send({err: "error occurred getting user"})
+  })
+}
