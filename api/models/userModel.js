@@ -14,7 +14,6 @@ function toLower(v) {
 function validateEmail(email){
   return /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(email);
 };
-
 let userSchema = new Schema({
   username: { type: String, unique: true, required: true },
   password: { type: String, required: true },
@@ -52,8 +51,9 @@ let userSchema = new Schema({
   stripe_acct_id: { type: String, default: null },
   transactions: [{ type: Schema.Types.ObjectId, ref: 'Transaction' }],
   subscriptions: [{ type: Schema.Types.ObjectId, ref: 'Subscription' }],
-  referred_by: { type: Schema.Types.ObjectId, ref: 'User'},
-  avatar: {type: Schema.Types.ObjectId, ref: 'Image'}
+  referred_by: { type: Schema.Types.ObjectId, ref: 'User', default: null},
+  avatar: {type: Schema.Types.ObjectId, ref: 'Image', default: null},
+  end_date: { type: Date, default: null }
 });
 
 // methods ======================

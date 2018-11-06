@@ -25,6 +25,8 @@ describe('Transaction', () => {
   let testProduct2 = null
   let testProduct3 = null
 
+  let postedTransaction = null
+
   let now = new Date()
   let testDate = new Date()
   testDate.setYear(now.getYear() + 1)
@@ -51,7 +53,6 @@ describe('Transaction', () => {
   }
 
   before((done) => { //Before each test we empty the database
-    console.log("BEFORE BEGIN")
       Transaction.remove({})
       .then(() => {
         return Product.remove({})
@@ -71,7 +72,7 @@ describe('Transaction', () => {
           email: newEveryoneUser.email
         })
         newEveryoneUser.stripe_cus_id = customer.id
-        console.log("stripe customer created for newEveryoneUser")
+        // console.log("stripe customer created for newEveryoneUser")
         return newEveryoneUser.save()
       })
       .then(user => {
@@ -128,7 +129,7 @@ describe('Transaction', () => {
       .catch(err => {
         console.log(err)
       })
-      console.log("BEFORE END")
+      // console.log("BEFORE END")
   })
 
   describe('/POST transactions', () => {
@@ -145,9 +146,6 @@ describe('Transaction', () => {
         done()
       })
     })
-  })
-
-  describe('/POST transactions', () => {
     it('it should POST a new transaction', (done) => {
       chai.request(server)
         .post('/transactions')
@@ -160,12 +158,10 @@ describe('Transaction', () => {
           res.body.should.be.a("object")
           res.body.should.have.property('product')
           res.body.should.have.property('user')
+          postedTransaction = res.body
           done()
         })
     })
-  })
-
-  describe('/POST transactions', () => {
     it('it should POST a new transaction for a previously purchased product and sould fail', (done) => {
       // create the previous transaction
       let newTransaction = new Transaction({
@@ -193,9 +189,6 @@ describe('Transaction', () => {
         done()
       })
     })
-  })
-
-  describe('/POST transactions', () => {
     it('it should POST a new transaction for a different product', (done) => {
       chai.request(server)
         .post('/transactions')
@@ -211,9 +204,6 @@ describe('Transaction', () => {
           done()
         })
     })
-  })
-
-  describe('/POST transactions', () => {
     it('it should POST a transaction for an invalid product id and return CastError - Cast to ObjectId', (done) => {
       chai.request(server)
         .post('/transactions')
@@ -234,9 +224,6 @@ describe('Transaction', () => {
           done()
         })
     })
-  })
-
-  describe('/POST transactions', () => {
     it('it should POST a transaction for an invalid product id for an invalid ObjectId', (done) => {
       chai.request(server)
         .post('/transactions')
@@ -253,9 +240,6 @@ describe('Transaction', () => {
           done()
         })
     })
-  })
-
-  describe('/POST transactions', () => {
     it('Admin should successfully POST a transaction for someone else', (done) => {
 
       let testTransaction = {
@@ -300,9 +284,6 @@ describe('Transaction', () => {
           done()
         })
     })
-  })
-
-  describe('/POST transactions', () => {
     it('Admin should POST a transaction for someone else that doesn\'t exist', (done) => {
       let testTransaction = {
         amount: testProduct3.amount,
@@ -331,9 +312,6 @@ describe('Transaction', () => {
           done()
         })
     })
-  })
-
-  describe('/POST transactions', () => {
     it('Admin should POST a transaction for someone else where the product doesn\'t exist', (done) => {
       let testTransaction = {
         amount: testProduct3.amount,
@@ -363,10 +341,279 @@ describe('Transaction', () => {
         })
     })
   })
+
+  describe('/GET transactions', () => {
+    it('everyone cant get a list of transactions with no token', (done) => {
+      chai.request(server)
+        .get('/transactions')
+        .send()
+        .end((err, res) => {
+          res.should.have.status(403)
+          res.body.should.be.a("object")
+          res.body.should.have.property("err")
+          res.body.err.should.have.property("message")
+          res.body.err.message.should.equal("Authorization Token not provided")
+          done()
+        })
+    })
+    // what about everyone getting a list of their own transactions
+    it('everyone cant get a list of transactions', (done) => {
+      chai.request(server)
+        .get('/transactions')
+        .set('Authorization', `Bearer ${testEveryoneUser.token}`)
+        .send()
+        .end((err, res) => {
+          res.should.have.status(401)
+          res.body.should.be.a("object")
+          res.body.should.have.property("err")
+          res.body.err.should.have.property("message")
+          res.body.err.message.should.equal("You are not authorized to read transactions")
+          done()
+        })
+    })
+    it('admin can get a list of transactions', (done) => {
+      chai.request(server)
+        .get('/transactions')
+        .set('Authorization', `Bearer ${testAdminUser.token}`)
+        .send()
+        .end((err, res) => {
+          res.should.have.status(201)
+          res.body.should.be.a("object")
+          res.body.should.have.property("docs")
+          res.body.docs.should.be.a("array")
+          res.body.should.have.property("total")
+          res.body.total.should.be.a("number")
+          res.body.total.should.equal(4)
+          res.body.should.have.property("limit")
+          res.body.limit.should.be.a("number")
+          res.body.limit.should.equal(10) // default when no query option is passed
+          res.body.should.have.property("page")
+          res.body.page.should.be.a("number")
+          res.body.page.should.equal(1)
+          res.body.should.have.property("pages")
+          res.body.pages.should.be.a("number")
+          res.body.pages.should.equal(1)
+          var docs = res.body.docs
+          for(let i = 0; i < docs.length; ++i){
+            var doc = res.body.docs[i]
+            doc.should.be.a("object")
+            doc.should.have.property("_id")
+            doc.should.have.property("user")
+            doc.should.have.property("product")
+            // doc.should.have.property("trans_num")
+            doc.should.have.property("amount")
+            doc.should.have.property("amount_refunded")
+            doc.should.have.property("tax_amount")
+            doc.should.have.property("tax_rate")
+            doc.should.have.property("tax_desc")
+            doc.should.have.property("tax_compound")
+            doc.should.have.property("tax_shipping")
+            doc.should.have.property("status")
+            doc.should.have.property("txn_type")
+            doc.should.have.property("response")
+            doc.should.have.property("gateway")
+            doc.should.have.property("ip_address")
+            doc.should.have.property("prorated")
+            doc.should.have.property("created_at")
+            doc.should.have.property("expires_at")
+            doc.should.have.property("refunded_at")
+            doc.should.have.property("end_date")
+          }
+          done()
+        })
+    })
+  })
+
+  describe('/GET transactions/:transactionId', () => {
+    it('everyone cant get a transaction with no token', (done) => {
+      chai.request(server)
+        .get('/transactions/'+invalidObjectId)
+        .send()
+        .end((err, res) => {
+          res.should.have.status(403)
+          res.body.should.be.a("object")
+          res.body.should.have.property("err")
+          res.body.err.should.have.property("message")
+          res.body.err.message.should.equal("Authorization Token not provided")
+          done()
+        })
+    })
+    // what about everyone getting their own transaction?
+    it('everyone cant get a transaction', (done) => {
+      chai.request(server)
+        .get('/transactions/' + invalidObjectId)
+        .set('Authorization', `Bearer ${testEveryoneUser.token}`)
+        .send()
+        .end((err, res) => {
+          res.should.have.status(401)
+          res.body.should.be.a("object")
+          res.body.should.have.property("err")
+          res.body.err.should.have.property("message")
+          res.body.err.message.should.equal("You are not authorized to read transactions")
+          done()
+        })
+    })
+    it('admin can get a transaction (filtered for admin)', (done) => {
+      chai.request(server)
+        .get('/transactions/'+ postedTransaction._id)
+        .set('Authorization', `Bearer ${testAdminUser.token}`)
+        .send()
+        .end((err, res) => {
+          res.should.have.status(201)
+          res.body.should.be.a("object")
+          res.body.should.have.property("_id")
+          res.body._id.should.equal(postedTransaction._id)
+          res.body.should.have.property("user")
+          res.body.user.should.equal(postedTransaction.user)
+          res.body.should.have.property("product")
+          res.body.product.should.equal(postedTransaction.product)
+          res.body.should.have.property("trans_num")
+          res.body.should.have.property("amount")
+          res.body.should.have.property("amount_refunded")
+          res.body.should.have.property("tax_amount")
+          res.body.should.have.property("tax_rate")
+          res.body.should.have.property("tax_desc")
+          res.body.should.have.property("tax_compound")
+          res.body.should.have.property("tax_shipping")
+          res.body.should.have.property("status")
+          res.body.should.have.property("txn_type")
+          res.body.should.have.property("response")
+          res.body.should.have.property("gateway")
+          res.body.should.have.property("ip_address")
+          res.body.should.have.property("prorated")
+          res.body.should.have.property("created_at")
+          res.body.should.have.property("expires_at")
+          res.body.should.have.property("refunded_at")
+          res.body.should.have.property("end_date")
+          done()
+        })
+    })
+  })
+
+  describe('/PUT transactions/:transactionId', () => {
+    it('everyone cant update a transaction with no token', (done) => {
+      chai.request(server)
+        .put('/transactions/'+invalidObjectId)
+        .send()
+        .end((err, res) => {
+          res.should.have.status(403)
+          res.body.should.be.a("object")
+          res.body.should.have.property("err")
+          res.body.err.should.have.property("message")
+          res.body.err.message.should.equal("Authorization Token not provided")
+          done()
+        })
+    })
+    it('everyone cant update a transaction', (done) => {
+      chai.request(server)
+        .put('/transactions/' + invalidObjectId)
+        .set('Authorization', `Bearer ${testEveryoneUser.token}`)
+        .send()
+        .end((err, res) => {
+          res.should.have.status(401)
+          res.body.should.be.a("object")
+          res.body.should.have.property("err")
+          res.body.err.should.have.property("message")
+          res.body.err.message.should.equal("You are not authorized to update transactions")
+          done()
+        })
+    })
+    it('admin can update a transaction (refund)', (done) => {
+      chai.request(server)
+        .put('/transactions/'+ postedTransaction._id)
+        .set('Authorization', `Bearer ${testAdminUser.token}`)
+        .send({status: "refunded"})
+        .end((err, res) => {
+          res.should.have.status(201)
+          res.body.should.be.a("object")
+          res.body.should.have.property("_id")
+          res.body._id.should.equal(postedTransaction._id)
+          res.body.should.have.property("user")
+          res.body.user.should.equal(postedTransaction.user)
+          res.body.should.have.property("product")
+          res.body.product.should.equal(postedTransaction.product)
+          res.body.should.have.property("trans_num")
+          res.body.should.have.property("amount")
+          res.body.should.have.property("amount_refunded")
+          res.body.should.have.property("tax_amount")
+          res.body.should.have.property("tax_rate")
+          res.body.should.have.property("tax_desc")
+          res.body.should.have.property("tax_compound")
+          res.body.should.have.property("tax_shipping")
+          res.body.should.have.property("status")
+          res.body.status.should.equal("refunded")
+          res.body.should.have.property("txn_type")
+          res.body.should.have.property("response")
+          res.body.should.have.property("gateway")
+          res.body.should.have.property("ip_address")
+          res.body.should.have.property("prorated")
+          res.body.should.have.property("created_at")
+          res.body.should.have.property("expires_at")
+          res.body.should.have.property("refunded_at")
+          res.body.should.have.property("end_date")
+          done()
+        })
+    }).timeout(5000);
+  })
+
+  describe('/DELETE transactions/:transactionId', () => {
+    it('everyone cant delete a transaction with no token', (done) => {
+      chai.request(server)
+        .delete('/transactions/' + invalidObjectId)
+        .send()
+        .end((err, res) => {
+          res.should.have.status(403)
+          res.body.should.be.a("object")
+          res.body.should.have.property("err")
+          res.body.err.should.have.property("message")
+          res.body.err.message.should.equal("Authorization Token not provided")
+          done()
+        })
+    })
+    it('everyone cant delete a transaction', (done) => {
+      chai.request(server)
+        .delete('/transactions/' + invalidObjectId)
+        .set('Authorization', `Bearer ${testEveryoneUser.token}`)
+        .send()
+        .end((err, res) => {
+          res.should.have.status(401)
+          res.body.should.be.a("object")
+          res.body.should.have.property("err")
+          res.body.err.should.have.property("message")
+          res.body.err.message.should.equal("You are not authorized to delete transactions")
+          done()
+        })
+    })
+    it('admin can delete a transaction', (done) => {
+      chai.request(server)
+        .delete('/transactions/' + postedTransaction._id)
+        .set('Authorization', `Bearer ${testAdminUser.token}`)
+        .send()
+        .end((err, res) => {
+          res.should.have.status(200)
+          res.body.should.be.a("object")
+          res.body.should.have.property("message")
+          res.body.message.should.equal("transaction successfully end dated")
+          done()
+        })
+    })
+    it('admin should get 404 transaction not found error', (done) => {
+      chai.request(server)
+        .delete('/transactions/' + invalidObjectId)
+        .set('Authorization', `Bearer ${testAdminUser.token}`)
+        .send()
+        .end((err, res) => {
+          res.should.have.status(404)
+          res.body.should.be.a("object")
+          res.body.should.have.property("err")
+          res.body.err.should.have.property("message")
+          res.body.err.message.should.equal("transaction not found")
+          done()
+        })
+    })
+  })
+
   after((done) => {
-  // runs after all tests in this block
-  // Remove all records that were created
-  console.log("AFTER BEGIN")
     Transaction.remove({})
     .then(() => {
       return Product.remove({})
@@ -375,79 +622,9 @@ describe('Transaction', () => {
       return User.remove({})
     })
     .then(() => {
-      console.log("AFTER END")
       done()
     }).catch((err)=> {
-      console.log("after error: ", err)
       done()
     })
   })
-
 });
-//
-//   describe('/PUT transactions/:transactionId', () => {
-//     it('it should Update an existing transaction', (done) => {
-//       let transaction = new Transaction(testTransaction)
-//       transaction.save((err, transaction) => {
-//         let updatedTransaction = transaction
-//         updatedTransaction.price = 199.99
-//         chai.request(server)
-//             .put('/transactions/' + transaction._id)
-//             .send(updatedTransaction)
-//             .end((err, res) => {
-//                 res.should.have.status(201)
-//                 res.body.should.be.a("object")
-//                 done()
-//             })
-//       })
-//     })
-//   })
-//
-//   describe('/GET transactions', () => {
-//     it('it should GET an array of transactions', (done) => {
-//       let transaction = new Transaction(testTransaction)
-//       transaction.save((err, transaction) => {
-//         chai.request(server)
-//             .get('/transactions')
-//             .end((err, res) => {
-//                 res.should.have.status(201)
-//                 res.body.should.be.a("array")
-//                 let fisrtTransaction = res.body[0]
-//                 fisrtTransaction.should.be.a("object")
-//                 done()
-//             })
-//       })
-//     })
-//   })
-//
-//   describe('/GET transactions/:transactionId', () => {
-//     it('it should GET a transaction', (done) => {
-//       let transaction = new Transaction(testTransaction)
-//       transaction.save((err, transaction) => {
-//         chai.request(server)
-//             .get('/transactions/' + transaction._id)
-//             .end((err, res) => {
-//               res.should.have.status(201)
-//               res.body.should.be.a("object")
-//               done()
-//             })
-//       })
-//     })
-//   })
-//
-//   describe('/DELETE transactions/:transactionId', () => {
-//     it('it should DELETE a transaction', (done) => {
-//       let transaction = new Transaction(testTransaction)
-//       transaction.save((err, transaction) => {
-//         chai.request(server)
-//             .delete('/transactions/' + transaction._id)
-//             .end((err, res) => {
-//                 res.should.have.status(201)
-//                 res.body.should.have.property("message").eql("transaction successfully end dated")
-//                 done()
-//             })
-//       })
-//     })
-//   })
-//
-// });

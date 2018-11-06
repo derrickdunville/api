@@ -14,7 +14,7 @@ module.exports = function(app) {
          * @apiError Unauthorized user is unauthorized
          */
         //.get(transactionController.ensureAuthorized, transactionController.listTransactions)
-        .get(transactionController.listTransactions)
+        .get(authService.ensureAuthorized, transactionController.listTransactions)
 
         /**
          * @api {post} /transactions Create New Transaction
@@ -33,7 +33,7 @@ module.exports = function(app) {
          * @apiSuccess {JSON} Transaction Object
          * @apiError Unauthorized user is unauthorized
          */
-        .get(transactionController.readTransaction)
+        .get(authService.ensureAuthorized, transactionController.readTransaction)
         /**
          * @api {put} /transactions/:transactionId Update Transaction
          * @apiGroup Transaction
@@ -41,7 +41,7 @@ module.exports = function(app) {
          * @apiSuccess {JSON} Transaction Object
          * @apiError Unauthorized user is unauthorized
          */
-        .put(transactionController.updateTransaction)
+        .put(authService.ensureAuthorized, transactionController.updateTransaction)
         /**
          * @api {delete} /transactions/:transactionId Delete Transaction
          * @apiGroup Transaction
@@ -49,6 +49,6 @@ module.exports = function(app) {
          * @apiSuccess {JSON} Transaction Object
          * @apiError Unauthorized user is unauthorized
          */
-        .delete(transactionController.deleteTransaction);
+        .delete(authService.ensureAuthorized, transactionController.deleteTransaction);
 
 };

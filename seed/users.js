@@ -8,6 +8,16 @@ exports.seedUsers = async function(){
 
   let model = "User"
 
+  // Admin
+  let admin =
+    {
+      _id: '5a6a572368cb6852a68a83d3',
+      username: 'admin',
+      password: 'admin',
+      email: 'tester@ascendtrading.net',
+      roles: ['admin']
+    }
+  documents.push(admin)
   // Admin with stripe_cus_id
   let derrick =
     {

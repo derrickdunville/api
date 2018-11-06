@@ -15,7 +15,7 @@ module.exports = function(app) {
          * @apiError Unauthorized user is unauthorized
          */
         //.get(productController.ensureAuthorized, productController.listProducts)
-        .get(productController.listProducts)
+        .get(authService.optionalAuthorization, productController.listProducts)
 
         /**
          * @api {post} /products Create New Product
@@ -25,7 +25,13 @@ module.exports = function(app) {
          * @apiError Unauthorized user is unauthorized
          */
         //.post(authService.ensureAuthorized, upload.fields([{name: 'cover_image', maxCount: 1}, {name: 'uploaded_file', maxCount: 1}]), productController.createProduct)
-        .post(upload.fields([{name: 'cover_image', maxCount: 1}, {name: 'uploaded_file', maxCount: 1}]), productController.createProduct)
+        .post(authService.ensureAuthorized,
+          upload.fields([{
+            name: 'cover_image', maxCount: 1
+          },{
+            name: 'uploaded_file', maxCount: 1
+          }]),
+          productController.createProduct)
 
     app.route('/products/:productId')
         /**
@@ -35,7 +41,7 @@ module.exports = function(app) {
          * @apiSuccess {JSON} Product Object
          * @apiError Unauthorized user is unauthorized
          */
-        .get(productController.readProduct)
+        .get(authService.optionalAuthorization, productController.readProduct)
         /**
          * @api {put} /products/:productId Update Product
          * @apiGroup Product
@@ -43,7 +49,13 @@ module.exports = function(app) {
          * @apiSuccess {JSON} Product Object
          * @apiError Unauthorized user is unauthorized
          */
-        .put(productController.updateProduct)
+         .put(authService.ensureAuthorized,
+           upload.fields([{
+             name: 'cover_image', maxCount: 1
+           },{
+             name: 'uploaded_file', maxCount: 1
+           }]),
+           productController.updateProduct)
         /**
          * @api {delete} /products/:productId Delete Product
          * @apiGroup Product
@@ -51,6 +63,16 @@ module.exports = function(app) {
          * @apiSuccess {JSON} Product Object
          * @apiError Unauthorized user is unauthorized
          */
-        .delete(productController.deleteProduct);
+        .delete(authService.ensureAuthorized, productController.deleteProduct);
+    
+    app.route('/products/:productId/download')
+        /**
+         * @api {get} /products/:productId/download download a products attached file
+         * @apiGroup Product
+         * @apiParam {Integer} productId Id of the desired product
+         * @apiSuccess {JSON} Product Object
+         * @apiError Unauthorized user is unauthorized
+         */
+        .get(authService.ensureAuthorized, productController.downloadProduct)
 
 };

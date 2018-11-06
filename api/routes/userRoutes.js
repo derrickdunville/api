@@ -15,7 +15,7 @@ module.exports = function(app) {
          * @apiError Unauthorized user is unauthorized
          */
         // .get(userController.ensureAuthorized, userController.listUsers)
-        .get(userController.listUsers)
+        .get(authService.ensureAuthorized, userController.listUsers)
 
         /**
          * @api {post} /users Create New User
@@ -34,7 +34,7 @@ module.exports = function(app) {
          * @apiSuccess {JSON} User Object
          * @apiError Unauthorized user is unauthorized
          */
-        .get(userController.readUser)
+        .get(authService.ensureAuthorized, userController.readUser)
         /**
          * @api {put} /users/:userId Update User
          * @apiGroup User
@@ -50,7 +50,7 @@ module.exports = function(app) {
          * @apiSuccess {JSON} User Object
          * @apiError Unauthorized user is unauthorized
          */
-        .delete(userController.deleteUser);
+        .delete(authService.ensureAuthorized, userController.deleteUser);
 
     app.route('/login')
         /**

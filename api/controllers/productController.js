@@ -11,26 +11,37 @@ let mongoose      = require('mongoose'),
     Product       = mongoose.model('Product'),
     AWS       = require('aws-sdk'),
     s3        = new AWS.S3({apiVersion: '2006-03-01', region: 'us-east-1'});
-//
-// let grants = {
-//     admin: {
-//         product: {
-//             "read:any": ["*"],
-//             "delete:any": ["*"],
-//             "update:any": ["*"]
-//         }
-//     },
-//     everyone: {
-//         product: {
-//             "read:any": ['*', '!password', '!token', '!email'],
-//             "delete:own": ['*'],
-//             "update:own": ['*']
-//         }
-//     }
-// };
+
+
+let grants = {
+  admin: {
+    product: {
+      "read:any": ["*"],
+      "create:any": ["*"],
+      "delete:any": ["*"],
+      "update:any": [
+        "file",
+        "cover_image",
+        "description"
+      ]
+    }
+  },
+  everyone: {
+    product: {
+      "read:any": ['*', '!file', '!stripe_plan_id', '!discord_role_id']
+    }
+  },
+  public: {
+    product: {
+      "read:any": ['*', '!file', '!stripe_plan_id', '!discord_role_id']
+    }
+  }
+};
+
+let ac = new AccessControl(grants);
 
 exports.listProducts = function(req, res) {
-    // console.log("User Roles: " + req.user.roles);
+
     let query = {}
     if(req.query._id !== undefined){
       query._id = req.query._id
@@ -45,7 +56,7 @@ exports.listProducts = function(req, res) {
     // Handle parsing sort
     let sort = {}
     if(req.query.sort !== undefined){
-      console.log(req.query.sort)
+      // console.log(req.query.sort)
       var sortList = req.query.sort.split(",")
       for(var i = 0; i < sortList.length; ++i){
         var direction = -1
@@ -59,9 +70,9 @@ exports.listProducts = function(req, res) {
         sort[column] = direction
       }
     }
-    console.log("Query: " + JSON.stringify(query))
-    console.log("Sort: " + JSON.stringify(sort))
-    console.log("Limit: " + req.query.limit)
+    // console.log("Query: " + JSON.stringify(query))
+    // console.log("Sort: " + JSON.stringify(sort))
+    // console.log("Limit: " + req.query.limit)
     let options = {}
     /* Handle parsing current page */
     if (req.query.page === undefined) {
@@ -85,23 +96,17 @@ exports.listProducts = function(req, res) {
       options.sort = sort
     }
     options.lean = true
-    console.log("Options: " + JSON.stringify(options))
+    // console.log("Options: " + JSON.stringify(options))
     // console.log("Options: " + JSON.stringify(options))
 
-    // let permission = ac.can(req.user.roles).readAny('user');
-    // if(permission.granted){
-
-    // } else {
-    //     res.status(400).send({err: "You are not authorized to view all users"});
-    // }
     options.populate = ['file', 'cover_image']
-    Product.paginate(query, options, function(err, products) {
-      if(err){
-        console.log(err)
-        res.status(401).send({err: 'Error getting products'})
-      } else {
+
+    let readPermission = ac.can(req.user.roles).readAny('product')
+    if(readPermission.granted){
+      Product.paginate(query, options)
+      .then(products => {
         /**
-         * Response looks like:
+         * products looks like:
          * {
          *   docs: [...] // array of Posts
          *   total: 42   // the total number of Posts
@@ -110,175 +115,331 @@ exports.listProducts = function(req, res) {
          *   pages: 5    // the total number of pages
          * }
         */
-        // console.dir("products: " + JSON.stringify(products))
+        let filteredProducts = readPermission.filter(JSON.parse(JSON.stringify(products.docs)))
+        products.docs = filteredProducts
         res.status(201).send(products);
-
-      }
-    });
+      }).catch(err => {
+        console.log(err)
+        res.status(500).send({err: err})
+      })
+    } else {
+        res.status(401).send({err: "You are not authorized to read products"});
+    }
 };
-
 
 exports.createProduct = function(req, res) {
 
   // Only admin should be allowed to create products
   // console.log("Creating product...");
-  console.log("Request Body: ")
-  console.dir(req.body)
+  // console.log("Request Body: ")
+  // console.dir(req.body)
   let product = JSON.parse(req.body.product)
-  console.log("Files: ")
-  console.dir(req.files)
+  // console.log("Files: ")
+  // console.dir(req.files)
   // if(!req.body.username || !req.body.password || !req.body.email) {
   //     res.status(400).send({err: "Must provide username, password, and email"});
   // } else {
 
-  waterfall([
-    function(done){
-      // upload the files to s3 and create a S3File/Image model
-      if(req.files['cover_image'] != undefined){
-        let cover_image = req.files['cover_image'][0] // only 1 in the list
-        let newImage = new Image({
-          bucket: "ascendtrading/products/cover", // should be a config var
-          key: cover_image.originalname,
-          image_ext: path.extname(cover_image.originalname)
-        })
-        let objectParams = {Bucket: newImage.bucket, Key: newImage.key, Body: cover_image.buffer, ACL: "public-read"}
-        s3.putObject(objectParams, function(err, data){
-          if(err){
-            done(err)
-          } else {
-            newImage.etag = data.etag
-            newImage.save().then(image => {
-              done(null, image)
+  // Check the permission on the resource
+  let permission = ac.can(req.user.roles).createAny('product');
+  if(permission.granted){
+    waterfall([
+      function(done){
+        // upload the files to s3 and create a S3File/Image model
+        if(req.files['cover_image'] != undefined){
+          let cover_image = req.files['cover_image'][0] // only 1 in the list
+          let newImage = new Image({
+            bucket: "ascendtrading/products/cover", // should be a config var
+            key: cover_image.originalname,
+            image_ext: path.extname(cover_image.originalname)
+          })
+          let objectParams = {Bucket: newImage.bucket, Key: newImage.key, Body: cover_image.buffer, ACL: "public-read"}
+          s3.putObject(objectParams, function(err, data){
+            if(err){
+              done(err)
+            } else {
+              newImage.etag = data.etag
+              newImage.save().then(image => {
+                done(null, image)
+              }).catch(err => {
+                done(err)
+              })
+            }
+          })
+        } else {
+          // no cover image, move on
+          done(null, null)
+        }
+      },
+      function(coverImage, done){
+        if(req.files['uploaded_file'] != undefined){
+          // console.dir(req.files['uploaded_file'][0])
+          let uploaded_file = req.files['uploaded_file'][0] // only 1 in the list
+          let newS3File = new S3File({
+            bucket: "ascendtrading/products/files", // should be a config var
+            key: uploaded_file.originalname,
+            file_ext: path.extname(uploaded_file.originalname)
+          })
+          let objectParams = {Bucket: newS3File.bucket, Key: newS3File.key, Body: uploaded_file.buffer, ACL: "public-read"}
+          s3.putObject(objectParams, function(err, data){
+            if(err){
+              done(err)
+            } else {
+              newS3File.etag = data.etag
+              newS3File.save().then(s3File => {
+                // console.log("file saved")
+                done(null, s3File, coverImage)
+              }).catch(err => {
+                done(err)
+              })
+            }
+          })
+        } else {
+          done(null, null, coverImage)
+        }
+      },
+      function(uploadedFile, coverImage, done){
+
+        // TODO: Error check the request body
+        let newProduct = new Product(product);
+        // add the file and cover image to the product
+        newProduct.cover_image = coverImage
+        newProduct.file = uploadedFile
+        // console.log("creating product")
+
+        // STRIPE: We may need to create a plan on stripe to attach to this new
+        // product. If the product is not "one-time" we need to create a plan on stripe
+        if (newProduct.interval !== 'one-time') {
+          // console.log("Creating stripe plan...");
+          stripe.plans.create({
+            amount: Math.round(newProduct.amount * 100),
+            interval: newProduct.interval,
+            name: newProduct.name,
+            currency: newProduct.currency
+          }).then(plan => {
+            // console.log("plan created")
+            // console.dir(plan);
+            newProduct.stripe_plan_id = plan.id
+            let savedProduct = newProduct.save()
+            savedProduct.then(product => {
+              // console.log("Product created" + product);
+              res.status(201).json(product)
             }).catch(err => {
+              // console.log("Error creating product!");
               done(err)
             })
-          }
-        })
-      } else {
-        // no cover image, move on
-        done(null, null)
-      }
-    },
-    function(coverImage, done){
-      if(req.files['uploaded_file'] != undefined){
-        // console.dir(req.files['uploaded_file'][0])
-        let uploaded_file = req.files['uploaded_file'][0] // only 1 in the list
-        let newS3File = new S3File({
-          bucket: "ascendtrading/products/files", // should be a config var
-          key: uploaded_file.originalname,
-          file_ext: path.extname(uploaded_file.originalname)
-        })
-        let objectParams = {Bucket: newS3File.bucket, Key: newS3File.key, Body: uploaded_file.buffer, ACL: "public-read"}
-        s3.putObject(objectParams, function(err, data){
-          if(err){
-            done(err)
-          } else {
-            newS3File.etag = data.etag
-            newS3File.save().then(s3File => {
-              console.log("file saved")
-              done(null, s3File, coverImage)
-            }).catch(err => {
-              done(err)
-            })
-          }
-        })
-      } else {
-        done(null, null, coverImage)
-      }
-    },
-    function(uploadedFile, coverImage, done){
-
-      // TODO: Error check the request body
-      let newProduct = new Product(product);
-      // add the file and cover image to the product
-      newProduct.cover_image = coverImage
-      newProduct.file = uploadedFile
-      console.log("creating product")
-
-      // STRIPE: We may need to create a plan on stripe to attach to this new
-      // product. If the product is not "one-time" we need to create a plan on stripe
-      if (newProduct.interval !== 'one-time') {
-        console.log("Creating stripe plan...");
-        stripe.plans.create({
-          amount: Math.round(newProduct.amount * 100),
-          interval: newProduct.interval,
-          name: newProduct.name,
-          currency: newProduct.currency
-        }).then(plan => {
-          console.log("plan created")
-          console.dir(plan);
-          newProduct.stripe_plan_id = plan.id
-          let savedProduct = newProduct.save()
-          savedProduct.then(product => {
-            console.log("Product created" + product);
-            res.status(201).json(product)
           }).catch(err => {
-            console.log("Error creating product!");
+            // console.error(err)
             done(err)
           })
-        }).catch(err => {
-          console.error(err)
-          done(err)
-        })
-      } else {
-        console.log("Saving product...");
-        let savedProduct = newProduct.save()
-        savedProduct.then(product => {
-          res.status(201).json(product)
-        }).catch(err => {
-          done(err)
-        })
+        } else {
+          // console.log("Saving product...");
+          let savedProduct = newProduct.save()
+          savedProduct.then(product => {
+            res.status(201).json(product)
+          }).catch(err => {
+            done(err)
+          })
+        }
       }
-    }
-  ],
-  function(err){
-    console.error(err)
-    res.status(400).send(err) // BAD REQUEST
-  })
+    ],
+    function(err){
+      // console.error(err)
+      res.status(400).send(err) // BAD REQUEST
+    })
+  } else {
+      res.status(401).send({err: {message: "You are not authorized to create products"}});
+  }
 };
 
 exports.readProduct = function(req, res) {
-  // Check the params
-  // if(!req.params.productId){
-  //     res.status(400).send({err: "You must provide a productId"});
-  // }
-  // // Check the permission on the resource
-  // let permission = ac.can('everyone').readAny('product');
-  // if(permission.granted){
-  Product.findById(req.params.productId, function(err, product) {
-      if (err)
-          res.status(401).send(err)
-          // Todo: Filter the memebership object
-      res.status(201).json(product)
-  });
-  // } else {
-  //     res.status(401).send({err: "Unauthorized"});
-  // }
+
+  // Check the permission on the resource
+  let readPermission = ac.can(req.user.roles).readAny('product');
+  if(readPermission.granted){
+    // console.log("read product permission granted")
+    // console.log("finding product with id: " + req.params.productId)
+    Product.findById(req.params.productId)
+    .populate({path: 'cover_image'})
+    .then(product => {
+      if(product == null){
+        res.status(404).send({err: {message: "product not found"}})
+      } else {
+        let filteredProduct = readPermission.filter(JSON.parse(JSON.stringify(product)))
+        res.status(201).json(filteredProduct)
+      }
+    }).catch(err => {
+      // console.dir(err)
+      res.status(500).send({err: err})
+    })
+  } else {
+      res.status(401).send({err: "you are not authorized to read products"});
+  }
 };
 
 exports.updateProduct = function(req, res) {
 
-  // // Check the params
-  // if(!req.params.productId){
-  //     res.status(400).send({err: "You must provide a productId"});
-  // }
-  // // Check the permission on the resource
-  // let permission = ac.can(req.session.user.roles).updateOwn('product');
-  // if(permission.granted){
-  Product.findOneAndUpdate(req.params.productId, req.body, {new: true}, function(err, product) {
-      if (err)
-          res.status(401).send(err)
-      res.status(201).json(product)
-  });
-  // } else {
-  //     res.status(400).send({err: "You are not authorized to update products"});
-  // }
-};
+  // What are we allowed to update?
+  // For any product we can not change the category of the product
+  // For products with a billing plan we can not change any billing details
+
+    // Only admin should be allowed to create products
+    // console.log("Creating product...");
+    // console.log("Request Body: ")
+    // console.dir(req.body)
+    let product = JSON.parse(req.body.product)
+    // console.log("Files: ")
+    // console.dir(req.files)
+    // if(!req.body.username || !req.body.password || !req.body.email) {
+    //     res.status(400).send({err: "Must provide username, password, and email"});
+    // } else {
+
+    // Check the permission on the resource
+    let updatePermission = ac.can(req.user.roles).updateAny('product')
+    let readPermission = ac.can(req.user.roles).readAny('product')
+    if(updatePermission.granted){
+      waterfall([
+        function(done){
+          // upload the files to s3 and create a S3File/Image model
+          if(req.files['cover_image'] != undefined){
+            let cover_image = req.files['cover_image'][0] // only 1 in the list
+            let newImage = new Image({
+              bucket: "ascendtrading/products/cover", // should be a config var
+              key: cover_image.originalname,
+              image_ext: path.extname(cover_image.originalname)
+            })
+            let objectParams = {Bucket: newImage.bucket, Key: newImage.key, Body: cover_image.buffer, ACL: "public-read"}
+            s3.putObject(objectParams, function(err, data){
+              if(err){
+                done(err)
+              } else {
+                newImage.etag = data.etag
+                newImage.save().then(image => {
+                  done(null, image)
+                }).catch(err => {
+                  done(err)
+                })
+              }
+            })
+          } else {
+            // no cover image, move on
+            done(null, null)
+          }
+        },
+        function(coverImage, done){
+          if(req.files['uploaded_file'] != undefined){
+            // console.dir(req.files['uploaded_file'][0])
+            let uploaded_file = req.files['uploaded_file'][0] // only 1 in the list
+            let newS3File = new S3File({
+              bucket: "ascendtrading/products/files", // should be a config var
+              key: uploaded_file.originalname,
+              file_ext: path.extname(uploaded_file.originalname)
+            })
+            let objectParams = {Bucket: newS3File.bucket, Key: newS3File.key, Body: uploaded_file.buffer, ACL: "public-read"}
+            s3.putObject(objectParams, function(err, data){
+              if(err){
+                done(err)
+              } else {
+                newS3File.etag = data.etag
+                newS3File.save().then(s3File => {
+                  // console.log("file saved")
+                  done(null, s3File, coverImage)
+                }).catch(err => {
+                  done(err)
+                })
+              }
+            })
+          } else {
+            done(null, null, coverImage)
+          }
+        },
+        function(uploadedFile, coverImage, done){
+
+          // TODO: Error check the request body
+          let productUpdates = JSON.parse(req.body.product)
+          // add the file and cover image to the product
+          if(coverImage != null)
+            productUpdates.cover_image = JSON.parse(JSON.stringify(coverImage))._id
+          if(uploadedFile != null)
+            productUpdates.file = JSON.parse(JSON.stringify(uploadedFile))._id
+          // console.log("creating product")
+          let filteredUpdates = updatePermission.filter(productUpdates)
+          Product.findOneAndUpdate({_id: req.params.productId}, filteredUpdates, {runValidators: true, context: 'query', new: true})
+          .populate({path: 'cover_image'})
+          .populate({path: 'file'})
+          .then(product => {
+            let filteredProduct = readPermission.filter(JSON.parse(JSON.stringify(product)))
+            // req.app.io.sockets.emit('user-updated', filteredUser)
+            // EMIT product updated socket
+            req.app.io.sockets.in('ADMIN').emit('PRODUCT_UPDATED', filteredProduct)
+            res.status(201).send(filteredProduct);
+          }).catch(err => {
+            done(err)
+          })
+        }
+      ],
+      function(err){
+        console.error(err)
+        res.status(400).send({err: err}) // BAD REQUEST
+      })
+    } else {
+        res.status(401).send({err: {message: "You are not authorized to update products"}});
+    }
+  };
 
 exports.deleteProduct = function(req, res) {
-  Product.findOneAndUpdate(req.params.productId, {end_date: new Date()}, {new: true}, function(err, product) {
-      if (err)
-          res.status(401).send(err)
-      res.status(201).json({message: 'product successfully end dated'})
-  })
+  let deletePermission = ac.can(req.user.roles).deleteAny('product');
+  let readPermission = ac.can(req.user.roles).readAny('product')
+  if(deletePermission.granted){
+    Product.findOneAndUpdate({_id: req.params.productId}, {end_date: new Date()}, {new: true})
+    .populate({path: 'cover_image'})
+    .then(product => {
+      if(product == null){
+        res.status(404).send({err: {message: "product not found"}})
+      } else {
+        let filteredProduct = readPermission.filter(JSON.parse(JSON.stringify(product)))
+        res.status(201).send(filteredProduct)
+      }
+    }).catch(err => {
+      res.status(500).send({err: err})
+    })
+  } else {
+    res.status(401).json({message: 'You are not authorized to delete products'})
+  }
 }
+
+
+exports.downloadProduct = function(req, res) {
+  // check to make sure that the user has a succeeded transaction for the product id requested. 
+  Transaction.find({user: req.user._id, product: req.params.productId, status: "succeeded"})
+  .then(transactions => {
+    if(transactions.length > 0){
+      console.log("user has a succeeded transaction for this product")
+      // user has a succeeded transaction for this product
+      Product.findById(req.params.productId)
+      .populate({path: "file"})
+      .then(product => {
+        if(product.file != null){
+          console.log("product contains a file... getting from s3")
+          var getParams = {
+            Bucket: product.file.bucket,
+            Key: product.file.key
+          }
+          res.attachment(product.file.key)
+          res.set("Access-Control-Expose-Headers", 'Content-Disposition')
+          var fileStream = s3.getObject(getParams).createReadStream();
+          fileStream.pipe(res);
+        } else {
+          res.status(404).send({message: 'this product does not have a file to downlaod'})
+        }
+      }).catch(err => {
+        res.status(500).send({message: 'something went wrong looking up the product'})
+      })
+    } else {
+      console.log("user does not have a succeeded transaction for this product")
+      res.status(401).send({message: 'user has not purchased this product'})
+    }
+  }).catch(err => {
+    res.status(500).send({message: 'something went wrong looking up the users transactions'})
+  })
+};

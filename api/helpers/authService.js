@@ -28,6 +28,38 @@ exports.ensureAuthorized = function(req, res, next) {
             }
         });
     } else {
-        res.status(403).send({err: "Provide Token"});
+        res.status(403).send({err: {message:"Authorization Token not provided"}});
+    }
+}
+
+// check for an authorization to lookup the user
+// however this authorization handler doesn't require an auth token.
+// usefull for public endpoints while maintaining access control to resource properties
+exports.optionalAuthorization = function(req, res, next) {
+    // console.log('ensureAuthorized...');
+    let bearerToken;
+    let bearerHeader = req.headers["authorization"];
+    if (typeof bearerHeader !== 'undefined') {
+      let bearer = bearerHeader.split(" ");
+      bearerToken = bearer[1];
+      // console.log("Sent Token: " + bearerToken);
+      // use the token to look up the user
+      User.findOne({token: bearerToken}, function(err, user) {
+        if (err || user === null){
+          // console.log('Token lookup failed...');
+          req.user = {roles: ['public']};
+          next();
+        } else {
+          // User was found with the token
+          // console.log(user);
+          req.user = user;
+          // console.log('Valid Token - Authorized');
+          next();
+        }
+      });
+    } else {
+      // add public roles to user
+      req.user = {roles: ['public']};
+      next();
     }
 }

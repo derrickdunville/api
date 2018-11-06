@@ -13,7 +13,7 @@ module.exports = function(app) {
          * @apiError Unauthorized user is unauthorized
          */
         //.get(subscriptionController.ensureAuthorized, subscriptionController.listSubscriptions)
-        .get(subscriptionController.listSubscriptions)
+        .get(authService.ensureAuthorized, subscriptionController.listSubscriptions)
 
         /**
          * @api {post} /subscriptions Create New Subscription

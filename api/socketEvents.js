@@ -1,14 +1,19 @@
 exports = module.exports = function(io) {
-  io.on('connection', function(socket) {
+  io.on('connection', function(client) {
     console.log('a user connected')
     // socket.join('Lobby');
-    socket.on('app mounted', function(user) {
+    client.on('app mounted', function(user) {
       // TODO: Does the server need to know the user?
       console.log('app mounted: ' + JSON.stringify(user))
-      socket.emit('receive socket', socket.id)
+      client.emit('receive socket', client.id)
     })
-    socket.on('test', function(user) {
-      console.log('test heard')
+    client.on("JOIN_ME", function(me) {
+      console.log("JOIN_ME joining...")
+      client.join(me) // user_id
+    })
+    client.on("JOIN_ADMIN", function(room) {
+      console.log("JOIN_ADMIN joining..." )
+      client.join(room)
     })
     // socket.on('join channel', function(channel) {
     //   socket.join(channel.name)

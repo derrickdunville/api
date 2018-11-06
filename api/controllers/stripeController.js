@@ -14,7 +14,7 @@ let mongoose      = require('mongoose'),
     Commission    = mongoose.model('Commission')
 
 customerSubscriptionCreated = function(req, res) {
-  console.log(JSON.stringify(req.body.data.object))
+  // console.log(JSON.stringify(req.body.data.object))
   res.status(200).send()
 }
 customerSubscriptionDeleted = function(req, res) {
@@ -28,11 +28,11 @@ customerSubscriptionDeleted = function(req, res) {
       { new: true },
       function(err, subscription) {
         if (err) {
-          console.log("STRIPE WEBHOOK EVENT ERROR: customer.subscription.deleted error occurred: \n" + err)
+          // console.log("STRIPE WEBHOOK EVENT ERROR: customer.subscription.deleted error occurred: \n" + err)
           res.status(200).send()
         }
         //TODO: send webhook event to admin and owner of subscription
-        req.app.io.sockets.emit('auth-updated', '')
+        // req.app.io.sockets.emit('auth-updated', '')
         res.status(200).send()
     })
   } else {
@@ -43,17 +43,17 @@ customerSubscriptionDeleted = function(req, res) {
       { new: true },
       function(err, subscription) {
         if (err){
-          console.log("STRIPE WEBHOOK EVENT ERROR: customer.subscription.deleted error occurred: \n" + err)
+          // console.log("STRIPE WEBHOOK EVENT ERROR: customer.subscription.deleted error occurred: \n" + err)
           res.status(200).send()
         }
         //TODO: send webhook event to admin and owner of subscription
-        req.app.io.sockets.emit('auth-updated', '')
+        // req.app.io.sockets.emit('auth-updated', '')
         res.status(200).send()
     })
   }
 }
 customerSubscriptionTrialWillEnd = function(req, res) {
-  console.log(JSON.stringify(req.body.data.object))
+  // console.log(JSON.stringify(req.body.data.object))
   res.status(200).send()
 }
 customerSubscriptionUpdated = function(req, res) {
@@ -68,11 +68,11 @@ customerSubscriptionUpdated = function(req, res) {
       { new: true },
       function(err, subscription) {
         if (err){
-          console.log("STRIPE WEBHOOK EVENT ERROR: customer.subscription.deleted error occurred: \n" + err)
+          // console.log("STRIPE WEBHOOK EVENT ERROR: customer.subscription.deleted error occurred: \n" + err)
           res.status(200).send()
         }
         //TODO: send webhook event to admin and owner of subscription
-        req.app.io.sockets.emit('auth-updated', '')
+        // req.app.io.sockets.emit('auth-updated', '')
         res.status(200).send()
     })
   } else {
@@ -83,17 +83,17 @@ customerSubscriptionUpdated = function(req, res) {
 }
 
 invoiceCreated = function(req, res) {
-  console.log("invoice.created")
+  // console.log("invoice.created")
   waterfall([
     function(done){
       //  use the stripe customer to look up the corresponding user
       // console.log("Looking up user by customer: " + req.body.data.object.customer)
       User.findOne({ stripe_cus_id: req.body.data.object.customer }, function(err, user) {
-        if (err) {
-          console.log("STRIPE WEBHOOK EVENT ERROR: invoice.created error occurred: \n" + err)
+        if (err || user == null) {
+          // console.log("STRIPE WEBHOOK EVENT ERROR: invoice.created error occurred: \n" + err)
           res.status(200).send()
         } else {
-          console.log("User Found")
+          // console.log("User Found")
           done(err, user)
         }
       });
@@ -103,31 +103,31 @@ invoiceCreated = function(req, res) {
       if(req.body.data.object.subscription !== null){
         Subscription.findOne({subscription_id: req.body.data.object.subscription}, function(err, subscription) {
           if (err) {
-            console.log("STRIPE WEBHOOK EVENT ERROR: invoice.created error occurred: \n" + err)
+            // console.log("STRIPE WEBHOOK EVENT ERROR: invoice.created error occurred: \n" + err)
             res.status(401).send(err)
           } else {
-            console.log("Subscription Found")
+            // console.log("Subscription Found")
             done(err, user, subscription)
           }
         })
       } else {
-        console.log("No Subscription on Invoice")
+        // console.log("No Subscription on Invoice")
         done(err, user, null)
       }
     },
     function(user, subscription, done){
       // create the transaction
-      console.log("creating stripe transaction")
+      // console.log("creating stripe transaction")
       //check if the transaction exists
       Transaction.findOne({ trans_num: req.body.data.object.charge }, function(err, transaction) {
         if (err) {
-          console.log("Error looking up transaction: " + err);
+          // console.log("Error looking up transaction: " + err);
           res.status(401).send(err)
         } else if (!transaction){
-          console.log("Transaction does not exist - Creating...")
+          // console.log("Transaction does not exist - Creating...")
           stripe.charges.retrieve(req.body.data.object.charge, function(err, charge) {
             if (err) {
-              console.log("Error looking up stripe charge: " + err);
+              // console.log("Error looking up stripe charge: " + err);
               res.status(401).send(err);
             } else {
               let invoice = req.body.data.object
@@ -144,13 +144,13 @@ invoiceCreated = function(req, res) {
               })
               newTransaction.save(function (err, transaction) {
                 if (err) {
-                    console.log("Saving newTransaction error: " + err);
+                    // console.log("Saving newTransaction error: " + err);
                     res.status(401).send(err);
                 } else {
-                    console.log("Transaction created");
+                    // console.log("Transaction created");
                     // console.dir(user)
                     if(user.referred_by != null){
-                      console.log("Transaction was referred by: " + user.referred_by + " creating new commision")
+                      // console.log("Transaction was referred by: " + user.referred_by + " creating new commision")
                       let newCommission = new Commission({
                         user: user.referred_by, // referring users id
                         transaction: transaction._id,
@@ -160,22 +160,22 @@ invoiceCreated = function(req, res) {
                       })
                       newCommission.save(function (err, commission) {
                         if(err){
-                          console.log("Saving newCommission error: " + err)
+                          // console.log("Saving newCommission error: " + err)
                           res.status(401).send(err)
                         } else {
-                          console.log("newCommission saved")
-                          console.dir(commission)
+                          // console.log("newCommission saved")
+                          // console.dir(commission)
                         }
                       })
                     } else {
-                      console.log("Transaction was not referred")
+                      // console.log("Transaction was not referred")
                     }
                     // console.log("Subscription created" + subscription);
                     User.findByIdAndUpdate(user._id, {$push: {transactions: transaction}}, {new: true}, function(err, updatedUser){
                       if(err){
                         res.status(401).send(err)
                       } else {
-                        req.app.io.sockets.emit('auth-updated', updatedUser)
+                        // req.app.io.sockets.emit('auth-updated', updatedUser)
                         res.status(200).send();
                       }
                     })
@@ -186,7 +186,7 @@ invoiceCreated = function(req, res) {
           })
         } else {
           // User found
-          console.log("Transaction Found - Updating...")
+          // console.log("Transaction Found - Updating...")
           done(err)
         }
       });
@@ -194,24 +194,24 @@ invoiceCreated = function(req, res) {
   ],
   function(err){
     if(err){
-      console.log("err: " + err)
+      // console.log("err: " + err)
       res.status(401).send(err)
     }
   })
   // create a new transaction for the user
 }
 invoicePaymentFailed = function(req, res) {
-  console.log("invoice.payment_failed")
+  // console.log("invoice.payment_failed")
   // console.log(JSON.stringify(req.body.data.object))
   res.status(200).send()
 }
 invoicePaymentSucceeded = function(req, res) {
-  console.log("invoice.payment_succeeded")
+  // console.log("invoice.payment_succeeded")
 
   // This timeout is used to make sure we get the invoice.created webhook to
   // make sure the transaction that is updated by invoice.payment_succeeded exists
   setTimeout(function(){
-    console.log("waiting for 2 seconds")
+    // console.log("waiting for 2 seconds")
 
     // DETAILS:
     // we only need to listen for webhook events for invoices that are for subscriptions
@@ -224,17 +224,17 @@ invoicePaymentSucceeded = function(req, res) {
     //  use the stripe customer to look up the corresponding user
     //  if the invoice is for a subscription look up the corresponding subscription
     if(req.body.data.object.subscription){
-      console.log("invoice is for a subscription")
+      // console.log("invoice is for a subscription")
       waterfall([
         function(done){
           //  use the stripe customer to look up the corresponding user
           // console.log("Looking up user by customer: " + req.body.data.object.customer)
           User.findOne({ stripe_cus_id: req.body.data.object.customer }, function(err, user) {
             if (err) {
-              console.log("STRIPE WEBHOOK EVENT ERROR: invoice.payment_succeeded error occurred: \n" + err)
+              // console.log("STRIPE WEBHOOK EVENT ERROR: invoice.payment_succeeded error occurred: \n" + err)
               done(err)
             } else {
-              console.log("User Found")
+              // console.log("User Found")
               done(err, user)
             }
           });
@@ -246,10 +246,10 @@ invoicePaymentSucceeded = function(req, res) {
             if(err){
               done(err)
             } else if (!transaction){
-              console.log("Transaction not found.. letting the webhook retry later")
+              // console.log("Transaction not found.. letting the webhook retry later")
               res.status(300).send()
             } else {
-              console.log("Transaction Found")
+              // console.log("Transaction Found")
               done(err, user, transaction)
             }
           })
@@ -259,10 +259,10 @@ invoicePaymentSucceeded = function(req, res) {
             req.body.data.object.subscription,
             function(err, subscription){
               if(err){
-                console.dir(err)
+                // console.dir(err)
                 done(err)
               } else {
-                console.dir(subscription)
+                // console.dir(subscription)
                 done(err, user, transaction, subscription)
               }
             }
@@ -278,10 +278,10 @@ invoicePaymentSucceeded = function(req, res) {
               transaction.status = 'succeeded'
               transaction.save(function(err, transaction){
                 if(err){
-                  console.log("error saving updated transaction: " + err)
+                  // console.log("error saving updated transaction: " + err)
                   done(err)
                 } else {
-                  console.log("updated transaction saved")
+                  // console.log("updated transaction saved")
                   res.status(200).send()
                 }
               })
@@ -290,11 +290,11 @@ invoicePaymentSucceeded = function(req, res) {
         }
         ],
         function(err){
-            console.log("error occurred")
+            // console.log("error occurred")
             res.status(200).send()
         })
     } else {
-      console.log("invoice.payment_succeeded for non subscription invoice")
+      // console.log("invoice.payment_succeeded for non subscription invoice")
       res.status(200).send()
     }
 
@@ -303,15 +303,15 @@ invoicePaymentSucceeded = function(req, res) {
 
 }
 invoiceSent = function(req, res) {
-  console.log(JSON.stringify(req.body.data.object))
+  // console.log(JSON.stringify(req.body.data.object))
   res.status(200).send()
 }
 invoiceUpcoming = function(req, res){
-  console.log(JSON.stringify(req.body.data.object))
+  // console.log(JSON.stringify(req.body.data.object))
   res.status(200).send()
 }
 invoiceUpdated = function(req, res){
-  console.log(JSON.stringify(req.body.data.object))
+  // console.log(JSON.stringify(req.body.data.object))
   res.status(200).send()
 }
 
@@ -320,7 +320,7 @@ invoiceUpdated = function(req, res){
 // for subscriptions we need to catch this to create the transaction records
 // that correspond to a subscription initiated charges
 chargeSucceeded = function(req, res) {
-  console.log("charge.succeeded")
+  // console.log("charge.succeeded")
   // // we can check the invoice on the charge to check if the charge was generated by
   // // a subscription.
   // waterfall([
@@ -391,9 +391,9 @@ chargeRefunded = function(req, res) {
     { new: true },
     function(err, transaction) {
       if (err) {
-        console.log("STRIPE WEBHOOK EVENT ERROR: refund.created error occurred: \n" + err)
+        // console.log("STRIPE WEBHOOK EVENT ERROR: refund.created error occurred: \n" + err)
       } else {
-        console.log("Transaction Updated to refunded")
+        // console.log("Transaction Updated to refunded")
     }
   });
   // Fire a socket event to update the client
@@ -401,8 +401,8 @@ chargeRefunded = function(req, res) {
 }
 
 exports.webhook = function(req, res) {
-  console.log("STRIPE WEBHOOK EVENT: ")
-  console.dir(req.body, {depth: null, colors: true})
+  // console.log("STRIPE WEBHOOK EVENT: ")
+  // console.dir(req.body, {depth: null, colors: true})
   // let event_json = JSON.parse(req.body)
   // console.log("STRIPE WEBHOOK EVENT BODY: " + JSON.stringify(req.body.data.object))
   switch(req.body.type){

@@ -73,7 +73,7 @@ exports.seedProducts = async function(){
     interval: 'one-time',
     amount: '100',
     description: 'test script description',
-    category: 'script',
+    category: 'script'
   }
   documents.push(one_time_product)
 

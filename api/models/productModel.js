@@ -5,20 +5,24 @@ var bcrypt   = require('bcrypt-nodejs')
 let mongoosePaginate = require('mongoose-paginate');
 
 var productSchema = new Schema({
+
+  // About Details
+  name: { type: String, unique: true, required: true},
+  description: { type: String, default: null },
+  category: {
+    type: String,
+    enum: ['membership', 'class', 'script', 'scanner'],
+    required: true
+  },
+
+  // Billing Details
+  amount: { type: Number, required: true },
   currency: { type: String, default: 'usd', required: true },
   interval: {
       type: String,
       enum: ['one-time', 'day', 'week', 'month', 'year', 'custom'],
       default: 'one-time',
       required: true
-  },
-  name: { type: String, unique: true, required: true},
-  amount: { type: Number, required: true },
-  description: { type: String },
-  category: {
-    type: String,
-    enum: ['membership', 'class', 'script', 'scanner'],
-    default: 'membership'
   },
   access: {
     type: String,
@@ -45,9 +49,10 @@ var productSchema = new Schema({
   },
   stripe_plan_id: { type: String },
   discord_role_id: { type: String },
-  create_date: { type: Date, default: Date.now },
+  created_at: { type: Date, default: Date.now },
   end_date: { type: Date },
 
+  // File details
   cover_image: { type: Schema.Types.ObjectId, ref: 'Image', default: null },
   file: { type: Schema.Types.ObjectId, ref: 'S3File', default: null }
 })

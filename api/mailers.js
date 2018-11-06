@@ -1,5 +1,6 @@
 let nodemailer = require('nodemailer')
 let client_host = 'localhost:8080'
+
 let sendGridSmtpTransport = nodemailer.createTransport({
   host: 'smtp.sendgrid.net',
   port: 465,

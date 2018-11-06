@@ -38,7 +38,7 @@ var transactionSchema = new Schema({
   txn_type: { type: String, default: null },
   response: { type: String, default: null },
   gateway: { type: String, default: "manual" },
-  id_address: { type: String, default: null },
+  ip_address: { type: String, default: null },
   prorated: { type: Boolean, default: false },
   created_at: { type: Date, required: true, default: Date.now() },
   expires_at: { type: Date, default: null },
