@@ -33,6 +33,7 @@ customerSubscriptionDeleted = function(req, res) {
         }
         //TODO: send webhook event to admin and owner of subscription
         // req.app.io.sockets.emit('auth-updated', '')
+        req.app.io.sockets.in(subscription.user).emit('ME_UPDATED', subscription.user)
         res.status(200).send()
     })
   } else {
@@ -47,7 +48,7 @@ customerSubscriptionDeleted = function(req, res) {
           res.status(200).send()
         }
         //TODO: send webhook event to admin and owner of subscription
-        // req.app.io.sockets.emit('auth-updated', '')
+        req.app.io.sockets.in(subscription.user).emit('ME_UPDATED', subscription.user)
         res.status(200).send()
     })
   }
@@ -72,7 +73,7 @@ customerSubscriptionUpdated = function(req, res) {
           res.status(200).send()
         }
         //TODO: send webhook event to admin and owner of subscription
-        // req.app.io.sockets.emit('auth-updated', '')
+        req.app.io.sockets.in(subscription.user).emit('ME_UPDATED', subscription.user)
         res.status(200).send()
     })
   } else {
@@ -133,7 +134,7 @@ invoiceCreated = function(req, res) {
               let invoice = req.body.data.object
               let newTransaction = new Transaction({
                 user: user._id,
-                subscription: subscription._id,
+                subscription: subscription,
                 trans_num: invoice.charge,
                 amount: invoice.subtotal,
                 total: invoice.total,
@@ -175,7 +176,9 @@ invoiceCreated = function(req, res) {
                       if(err){
                         res.status(401).send(err)
                       } else {
-                        // req.app.io.sockets.emit('auth-updated', updatedUser)
+                        console.log("transaction created from stripe webhook")
+                        req.app.io.sockets.in(user._id).emit('ME_UPDATED', updatedUser)
+                        req.app.io.sockets.in('ADMIN').emit('TRANSACTION_CREATED_EVENT', transaction)
                         res.status(200).send();
                       }
                     })
@@ -282,6 +285,8 @@ invoicePaymentSucceeded = function(req, res) {
                   done(err)
                 } else {
                   // console.log("updated transaction saved")
+                  req.app.io.sockets.in(user._id).emit('ME_UPDATED', user._id)
+                  req.app.io.sockets.in('ADMIN').emit('TRANSACTION_UPDATED_EVENT', transaction)
                   res.status(200).send()
                 }
               })
@@ -394,6 +399,7 @@ chargeRefunded = function(req, res) {
         // console.log("STRIPE WEBHOOK EVENT ERROR: refund.created error occurred: \n" + err)
       } else {
         // console.log("Transaction Updated to refunded")
+        req.app.io.sockets.in(transaction.user).emit('ME_UPDATED', transaction.user)
     }
   });
   // Fire a socket event to update the client

@@ -185,6 +185,8 @@ exports.createTransaction = function(req, res) {
                 done(err)
               } else {
                 // console.dir(transaction)
+                req.app.io.sockets.in('ADMIN').emit('TRANSACTION_CREATED', transaction)
+                req.app.io.sockets.in(user._id).emit('ME_UPDATED', user)
                 res.status(201).json(readPermission.filter(JSON.parse(JSON.stringify(transaction))))
               }
             })
@@ -240,7 +242,7 @@ exports.createTransaction = function(req, res) {
             if(transactions.length > 0){
               // console.log("transaction: " + transactions.length)
               // console.dir(JSON.parse(JSON.stringify(transactions)))
-              // console.log("looks like this user has already purchased this one-time product")
+              console.log("looks like this user has already purchased this one-time product")
               res.status(403).send({err: {message: "user has already purchased this product"}})
             } else {
               // the user has not purchased the requested product and we are ok
@@ -273,22 +275,33 @@ exports.createTransaction = function(req, res) {
               newTransaction.gateway = "stripe"
               newTransaction.save()
               .then(transaction => {
-                // console.log("transaction created: ")
-                // console.dir(JSON.parse(JSON.stringify(transaction)))
+                console.log("transaction created: ")
+                console.dir(JSON.parse(JSON.stringify(transaction)))
                 User.findByIdAndUpdate(transaction.user, {$push: {transactions: transaction}}, {new: true})
                 .then(user => {
-                  res.status(201).send(readPermission.filter(JSON.parse(JSON.stringify(transaction))))
+                  Transaction.findById({_id: transaction._id})
+                  .populate({path: 'user'})
+                  .populate({path: 'product'})
+                  .then(transaction => {
+                    console.dir(JSON.parse(JSON.stringify(transaction)))
+                    req.app.io.sockets.in('ADMIN').emit('TRANSACTION_CREATED_EVENT', transaction)
+                    req.app.io.sockets.in(transaction.user._id).emit('ME_UPDATED', transaction.user)
+                    res.status(201).send(readPermission.filter(JSON.parse(JSON.stringify(transaction))))
+                  }).catch(err => {
+                    console.log("something went wrong creating the transaction")
+                    done(err)
+                  })
                 }).catch(err => {
-                  // console.log("sonething went wrong pushing the transaction onto the user")
+                  console.log("sonething went wrong pushing the transaction onto the user")
                   done(err)
                 })
               }).catch(err => {
-                // console.log("something went wrong creating the transaction")
+                console.log("something went wrong creating the transaction")
                 done(err)
               })
             }
           }).catch(err => {
-            // console.log("error looking up user transactions", err)
+            console.log("error looking up user transactions", err)
             done(err)
           })
         }],
@@ -380,6 +393,7 @@ exports.updateTransaction = function(req, res) {
                 // req.app.io.sockets.in(transaction.user._id.toString()).emit('TRANSACTION_UPDATED', filteredTransaction)
                 // Let the admin user know about the updates
                 req.app.io.sockets.in('ADMIN').emit('TRANSACTION_UPDATED', filteredTransaction)
+                req.app.io.sockets.in(transaction.user._id).emit('ME_UPDATED', transaction.user)
                 res.status(201).send(filteredTransaction);
               }).catch(err => {
                 done(err)
@@ -415,6 +429,8 @@ exports.deleteTransaction = function(req, res) {
       if(transaction == null){
         res.status(404).send({err: {message: "transaction not found"}})
       } else {
+        req.app.io.sockets.in('ADMIN').emit('TRANSACTION_CREATED', transaction)
+        req.app.io.sockets.in(user._id).emit('ME_UPDATED', user)
         res.status(200).send({message: "transaction successfully end dated"})
       }
     }).catch(err => {

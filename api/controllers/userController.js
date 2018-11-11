@@ -518,6 +518,7 @@ exports.createUser = function(req, res) {
                 // if(referred_by != null){
                 //   mailers.sendNewReferralRegistrationMail(updated_user, referred_by)
                 // }
+                req.app.io.sockets.in('ADMIN').emit('USER_CREATED_EVENT', updated_user)
                 res.status(201).send(updated_user);
               }).catch(err => {
                 done(err)

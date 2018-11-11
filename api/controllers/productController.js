@@ -236,6 +236,7 @@ exports.createProduct = function(req, res) {
           // console.log("Saving product...");
           let savedProduct = newProduct.save()
           savedProduct.then(product => {
+            req.app.io.sockets.in('ADMIN').emit('PRODUCT_CREATED_EVENT', product)
             res.status(201).json(product)
           }).catch(err => {
             done(err)

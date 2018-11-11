@@ -54,7 +54,9 @@ var productSchema = new Schema({
 
   // File details
   cover_image: { type: Schema.Types.ObjectId, ref: 'Image', default: null },
-  file: { type: Schema.Types.ObjectId, ref: 'S3File', default: null }
+  file: { type: Schema.Types.ObjectId, ref: 'S3File', default: null },
+  
+  video_id: {type: String}
 })
 
 productSchema.plugin(mongoosePaginate);

@@ -231,6 +231,7 @@ exports.createSubscription = function(req, res) {
                           Subscription.findOne({_id: subscription._id})
                           .populate({path: 'product'})
                           .then(populated_subscription => {
+                            req.app.io.sockets.in('ADMIN').emit('SUBSCRIPTION_CREATED_EVENT', populated_subscription)
                             res.status(201).json(readPermission.filter(JSON.parse(JSON.stringify(populated_subscription))))
                           }).catch(err => {
                             done(err)
@@ -282,6 +283,7 @@ exports.createSubscription = function(req, res) {
                       Subscription.findOne({_id: subscription._id})
                       .populate({path: 'product'})
                       .then(populated_subscription => {
+                        req.app.io.sockets.in('ADMIN').emit('SUBSCRIPTION_CREATED_EVENT', populated_subscription)
                         res.status(201).json(readPermission.filter(JSON.parse(JSON.stringify(populated_subscription))))
                       }).catch(err => {
                         done(err)

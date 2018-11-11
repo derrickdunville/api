@@ -1,6 +1,7 @@
 exports = module.exports = function(io) {
   io.on('connection', function(client) {
     console.log('a user connected')
+    console.dir(client.id)
     // socket.join('Lobby');
     client.on('app mounted', function(user) {
       // TODO: Does the server need to know the user?
@@ -8,12 +9,25 @@ exports = module.exports = function(io) {
       client.emit('receive socket', client.id)
     })
     client.on("JOIN_ME", function(me) {
-      console.log("JOIN_ME joining...")
+      console.log("JOIN_ME joining... " + me)
       client.join(me) // user_id
+      console.dir(client.rooms)
+    })
+    client.on("LEAVE_ME", function(me) {
+      console.log("LEAVE_ME leaving..." + me )
+      client.leave(me)
     })
     client.on("JOIN_ADMIN", function(room) {
       console.log("JOIN_ADMIN joining..." )
       client.join(room)
+    })
+    client.on("LEAVE_ADMIN", function(room) {
+      console.log("LEAVE_ADMIN leaving..." )
+      client.leave(room)
+    })
+    client.on("disconnect", function(room) {
+      console.log("disconnected..." )
+      client.removeAllListeners(["ME_UPDATED"])
     })
     // socket.on('join channel', function(channel) {
     //   socket.join(channel.name)
