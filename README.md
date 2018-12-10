@@ -32,7 +32,7 @@ nodejs, mongodb, mongoose, accesscontrol, SocketIO, Heroku, apidocs
 ```
 export API_PORT=3000
 export API_BASE_URL=http://localhost:3000/
-export MONGODB_URI=mongodb://localhost/ascend_trading
+export MONGODB_URI=mongodb://localhost/api
 export DISCORD_CLIENT_ID=406318468703584266
 export DISCORD_CLIENT_SECRET=Nu7ZKYZOijTlsdd6fZS1Iz3KGBBI8Vrk
 export DISCORD_CALLBACK=https://ascendtrading.ngrok.io/oauth/discord/callback
