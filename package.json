@@ -1,9 +1,10 @@
 {
-  "name": "ascend-api",
-  "version": "2017.1.0",
+  "name": "api",
+  "version": "2018.1.0",
   "description": "",
   "main": "server.js",
   "scripts": {
+    "docs": "apidoc -i api/ -o apidoc/",
     "postinstall": "apidoc -i api/ -o apidoc/",
     "dev": "npm-run-all --parallel dev:*",
     "dev:server": "nodemon --watch api --exec \"node server.js\"",
@@ -14,7 +15,7 @@
     "node": "~7.10.1",
     "npm": "~4.2.0"
   },
-  "author": "Ascend Trading Devlopment",
+  "author": "Derrick Dunville",
   "license": "ISC",
   "dependencies": {
     "accesscontrol": "^1.5.2",
@@ -27,12 +28,14 @@
     "body-parser": "^1.17.2",
     "btoa": "^1.1.2",
     "client-sessions": "^0.8.0",
+    "cookie-parser": "^1.4.3",
     "cors": "^2.8.4",
     "crypto": "^1.0.1",
     "express": "^4.15.3",
     "express-formidable": "^1.0.0",
     "express-jwt": "^5.3.0",
     "express-session": "^1.15.5",
+    "faker": "^4.1.0",
     "ip": "^1.1.5",
     "jsonwebtoken": "^7.4.2",
     "lodash": "^4.17.4",
@@ -56,11 +59,11 @@
     "validator": "^10.4.0"
   },
   "apidoc": {
-    "name": "Ascend Trading API",
-    "version": "2017.1.0",
-    "description": "apiDoc for Ascend Trading",
+    "name": "API",
+    "version": "2018.1.0",
+    "description": "apiDoc for API",
     "apidoc": {
-      "title": "Ascend Trading API",
+      "title": "API",
       "url": "https://api.ascendtrading.net"
     }
   },

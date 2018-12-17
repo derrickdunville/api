@@ -1,41 +1,26 @@
 let express = require('express'),
     app = express(),
     morgan = require('morgan'),
-    API_BASE_URL = process.env.API_BASE_URL || 'http://localhost',
-    PORT = process.env.PORT || 3001,
-    MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost/api',
+    // API_BASE_URL = process.env.API_BASE_URL || 'http://localhost',
+    API_BASE_URL = 'http://localhost',
+    PORT = 3001,
+    // MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost/api',
+    MONGODB_URI = 'mongodb://localhost/api',
     mongoose = require('mongoose'),
     bodyParser = require('body-parser'),
+    cookieParser = require('cookie-parser')
     formidable = require('express-formidable')
     cors = require('cors'),
 
     //Mongoose Models
     User = require('./api/models/userModel'),
-    Commission = require('./api/models/commissionModel'),
-    Transaction = require('./api/models/transactionModel'),
-    Product = require('./api/models/productModel'),
-    Subscription = require('./api/models/subscriptionModel'),
-    Click = require('./api/models/clickModel'),
-    Image = require('./api/models/imageModel'),
-    S3File = require('./api/models/s3FileModel'),
-
     //Routes
-    meRoutes = require('./api/routes/meRoutes'),
-    validationRoutes = require('./api/routes/validationRoutes'),
     userRoutes = require('./api/routes/userRoutes'),
-    productRoutes = require('./api/routes/productRoutes'),
-    subscriptionRoutes = require('./api/routes/subscriptionRoutes'),
-    transactionRoutes = require('./api/routes/transactionRoutes'),
-    commissionRoutes = require('./api/routes/commissionRoutes'),
-    clickRoutes = require('./api/routes/clickRoutes'),
-    oauthRoutes = require('./api/routes/oauthRoutes'),
-    stripeRoutes = require('./api/routes/stripeRoutes'),
-    socketRoutes = require('./api/routes/socketRoutes'),
-    SocketIo = require('socket.io')
 
 
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json())
+app.use(cookieParser())
 // app.use(formidable())
 app.use(function(req, res, next) {
     res.setHeader('Access-Control-Allow-Origin', '*')
@@ -45,17 +30,7 @@ app.use(function(req, res, next) {
 })
 app.use(cors())
 
-meRoutes(app)
-validationRoutes(app)
 userRoutes(app)
-productRoutes(app)
-subscriptionRoutes(app)
-transactionRoutes(app)
-commissionRoutes(app)
-clickRoutes(app)
-oauthRoutes(app)
-stripeRoutes(app)
-socketRoutes(app)
 
 app.use('/', express.static('apidoc'))
 // catch 404 and forward to error handler
@@ -78,11 +53,6 @@ mongoose.connect(MONGODB_URI, function (err, res) {
         console.log("API_BASE_URL: ", API_BASE_URL)
         console.log("MONGODB_URI: ", MONGODB_URI)
     })
-
-    const io = new SocketIo(server, {path: '/ws'})
-    const socketEvents = require('./api/socketEvents')(io);
-
-    app.io = io // Allows us to access io in the controllers
 })
 
 module.exports = app // for testing

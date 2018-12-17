@@ -7,15 +7,20 @@ let mongoose  = require('mongoose'),
 // look up the user with the jwt token and push the users role list
 // onto the request for authorization at the endpoint
 exports.ensureAuthorized = function(req, res, next) {
-    // console.log('ensureAuthorized...');
+    console.log('ensureAuthorized...');
     let bearerToken;
-    let bearerHeader = req.headers["authorization"];
-    if (typeof bearerHeader !== 'undefined') {
-        let bearer = bearerHeader.split(" ");
-        bearerToken = bearer[1];
+    let cookie = req.headers["cookie"];
+    if (typeof req.cookies.cookie !== 'undefined' && req.cookies.cookie !== null) {
+      console.log("cookie is not undefined")
+        // console.log("cookies")
+        console.dir(req.cookies);
+        // let bearer = bearerHeader.split(" ");
+        // bearerToken = bearer[1];
         // console.log("Sent Token: " + bearerToken);
         // use the token to look up the user
-        User.findOne({token: bearerToken}, function(err, user) {
+        let current_date = Date.now()
+        User.findOne({token: req.cookies.cookie}, function(err, user) {
+        // User.findOne({token: req.cookies.cookie, token_expires: {$gt: current_date}}, function(err, user) {
             if (err || user === null){
                 // console.log('Token lookup failed...');
                 res.status(401).send({err: "Invalid Token - Error: " + err});
@@ -28,7 +33,7 @@ exports.ensureAuthorized = function(req, res, next) {
             }
         });
     } else {
-        res.status(403).send({err: {message:"Authorization Token not provided"}});
+        res.status(403).send({err: {message:"Authorization not provided"}});
     }
 }
 

@@ -30,30 +30,14 @@ let userSchema = new Schema({
   },
   created_at: { type: Date, default: Date.now },
   token: { type: String, default: null },
-  passwordResetToken: { type: String, default: null },
-  passwordResetExpires: { type: Date, default: null },
-  discordOAuthToken: { type: String, default: null },
-  discordOAuthExpires: { type: Date, default: null },
-  discordAccessToken: { type: String, default: null },
-  discordAccessTokenExpires: { type: Date, default: null },
-  discordRefreshToken: { type: String, default: null },
-  discordUsername: { type: String, default: null },
-  discordDiscriminator: { type: String, default: null },
-  discordId: { type: String, default: null },
+  token_expires: { type: Date, default: null },
   roles: {
     type: [{
       type: String,
       enum: ['super', 'admin', 'member', 'everyone']
     }],
     default: ['everyone']
-  },
-  stripe_cus_id: { type: String, default: null },
-  stripe_acct_id: { type: String, default: null },
-  transactions: [{ type: Schema.Types.ObjectId, ref: 'Transaction' }],
-  subscriptions: [{ type: Schema.Types.ObjectId, ref: 'Subscription' }],
-  referred_by: { type: Schema.Types.ObjectId, ref: 'User', default: null},
-  avatar: {type: Schema.Types.ObjectId, ref: 'Image', default: null},
-  end_date: { type: Date, default: null }
+  }
 });
 
 // methods ======================
@@ -66,48 +50,6 @@ userSchema.methods.generateHash = function(password) {
 userSchema.methods.validPassword = function(password) {
     return bcrypt.compareSync(password, this.password);
 };
-
-userSchema.methods.getDiscordRoles = function(err, cb){
-  console.log("getting discord roles")
-
-  const transactions =
-    this.model('User')
-    .findOne({_id: this._id})
-    .populate({
-      path: 'transactions',
-      populate: {
-        path: 'product',
-        match: { category: 'membership' },
-        select: 'discord_role_id -_id'
-      },
-      match: {
-        expires_at: { $gte: new Date()},
-        status: 'succeeded'
-      },
-      select: 'product -_id'
-    })
-    .select('transactions -_id')
-    .exec()
-
-    return transactions.then(result => {
-      console.log("processing roles from transactions")
-      let parsedUser = (JSON.parse(JSON.stringify(result)))
-      console.dir(parsedUser)
-      let roles = []
-      for(let i = 0; i < parsedUser.transactions.length; ++i){
-        if(parsedUser.transactions[i].product.discord_role_id){
-          console.log(parsedUser.transactions[i].product.discord_role_id)
-          roles.push(parsedUser.transactions[i].product.discord_role_id)
-        }
-      }
-      console.dir(roles)
-      return roles
-    }).catch(err => {
-      console.log("an error occurred getting discord roles", err)
-      return []
-    })
-    console.log("shouldnt get here")
-}
 
 userSchema.plugin(mongoosePaginate);
 userSchema.plugin(uniqueValidator, { message: 'already exists' });

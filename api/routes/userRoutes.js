@@ -6,7 +6,7 @@ module.exports = function(app) {
         multer    = require('multer'),
         upload    = multer()
 
-    // users Routes
+
     app.route('/users')
         /**
          * @api {get} /users List All Users
@@ -14,7 +14,6 @@ module.exports = function(app) {
          * @apiSuccess {JSON} List of all users
          * @apiError Unauthorized user is unauthorized
          */
-        // .get(userController.ensureAuthorized, userController.listUsers)
         .get(authService.ensureAuthorized, userController.listUsers)
 
         /**
@@ -42,7 +41,7 @@ module.exports = function(app) {
          * @apiSuccess {JSON} User Object
          * @apiError Unauthorized user is unauthorized
          */
-        .put(authService.ensureAuthorized, upload.single('avatar'), userController.updateUser)
+        .put(authService.ensureAuthorized, userController.updateUser)
         /**
          * @api {delete} /users/:userId Delete User
          * @apiGroup User
@@ -62,31 +61,22 @@ module.exports = function(app) {
          */
         .post(userController.loginUser);
 
-    app.route('/forgot-password')
+    app.route('/logout')
         /**
-         * @api {post} /forgot-password Forgot Password
+         * @api {post} /logout Logout
          * @apiGroup Auth
-         * @apiParam {JSON} Email, example: { email: "contact@ascendtrading.net"}
-         * @apiSuccess {JSON} Err or Msg
-         */
-        .post(userController.forgotPassword);
-
-    app.route('/reset-password')
-        /**
-         * @api {post} /reset-password Reset Password
-         * @apiGroup Auth
-         * @apiParam {JSON} Reset Password, example: { resetToken: "jaksdbauicbsjakd", newPassword: "newpassword"}
+         * @apiParam {JSON} User, example: { username: "AscendUser", password: "password"}
          * @apiSuccess {JSON} User Object
+         * @apiError Unauthorized user is unauthorized
          */
-        .post(userController.resetPassword);
+        .get(authService.ensureAuthorized, userController.logoutUser);
 
-    app.route('/verify-password-reset-token')
-        /**
-         * @api {post} /verify-password-reset-token Verify Password Reset Token
-         * @apiGroup Auth
-         * @apiParam {JSON} Reset Password, example: { resetToken: "jaksdbauicbsjakd", newPassword: "newpassword"}
-         * @apiSuccess {JSON} Err or Msg
-         */
-        .post(userController.verifyPasswordResetToken);
-
+    app.route('/@me')
+      /**
+       * @api {get} /@me Get the currently logged in user
+       * @apiGroup User
+       * @apiSuccess {JSON} User Object
+       * @apiError Unauthorized user is unauthorized
+       */
+        .get(authService.ensureAuthorized, userController.me)
 };

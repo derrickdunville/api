@@ -14,7 +14,7 @@ exports.seedUsers = async function(){
       _id: '5a6a572368cb6852a68a83d3',
       username: 'admin',
       password: 'admin',
-      email: 'tester@ascendtrading.net',
+      email: 'admin@ascendtrading.net',
       roles: ['admin']
     }
   documents.push(admin)
@@ -24,14 +24,10 @@ exports.seedUsers = async function(){
       _id: '5a6a572368cb6852a68a83d4',
       username: 'derrick',
       password: 'derrick',
-      email: 'dev@ascendtrading.net',
+      email: 'derrickdunville@gmail.com',
       roles: ['admin']
     }
-  let derrick_stripe_cus = await stripe.customers.create({
-      source: 'tok_visa',
-      email: derrick.email
-    })
-  derrick.stripe_cus_id = derrick_stripe_cus.id
+
   documents.push(derrick)
 
   // Everone with stripe_cus_id
@@ -43,24 +39,19 @@ exports.seedUsers = async function(){
       email: 'frank@ascendtrading.net',
       roles: ['everyone']
     }
-  let frank_stripe_cus = await stripe.customers.create({
-      source: 'tok_visa',
-      email: frank.email
-    })
-  frank.stripe_cus_id = frank_stripe_cus.id
   documents.push(frank)
 
-  // let number_of_seeds = 60
-  // // create fake users with "everyone" role
-  // for (let i = 0; i < number_of_seeds; ++i) {
-  //   let user = {}
-  //   user._id = utils.mongoObjectId()
-  //   user.username = faker.internet.userName()
-  //   user.email = faker.internet.email()
-  //   user.password = faker.internet.password()
-  //   user.roles = ["everyone"]
-  //   documents.push(user)
-  // }
+  let number_of_seeds = 27
+  // create fake users with "everyone" role
+  for (let i = 0; i < number_of_seeds; ++i) {
+    let user = {}
+    user._id = utils.mongoObjectId()
+    user.username = faker.internet.userName()
+    user.email = faker.internet.email()
+    user.password = faker.internet.password()
+    user.roles = ["everyone"]
+    documents.push(user)
+  }
 
   let users = {
     model: model,
