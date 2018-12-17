@@ -1,17 +1,13 @@
-# ascend-api
+# api
 Ascend Trading Node API - Nodejs, Mongo, SocketIO
 
 ## About
-This is the Ascend Trading API. It is a JSON API backend for the Ascend Trading application.
+This is a basic JSON API.
 
 ## Technologies
 nodejs, mongodb, mongoose, accesscontrol, SocketIO, Heroku, apidocs
 
 ## API Docs
-[PRODUCTION](https://api.ascendtrading.net/apidocs)
-
-[BETA](https://ascend-api.herokuapp.com/apidocs)
-
 [LOCAL](http://localhost:3000/apidocs)
 
 ## Helpful Docs
@@ -28,40 +24,6 @@ nodejs, mongodb, mongoose, accesscontrol, SocketIO, Heroku, apidocs
 [APIDOCS](http://apidocjs.com/)
 
 ## Environment Variables
-### APLHA (Local):
-```
-export API_PORT=3000
-export API_BASE_URL=http://localhost:3000/
-export MONGODB_URI=mongodb://localhost/api
-export DISCORD_CLIENT_ID=406318468703584266
-export DISCORD_CLIENT_SECRET=Nu7ZKYZOijTlsdd6fZS1Iz3KGBBI8Vrk
-export DISCORD_CALLBACK=https://ascendtrading.ngrok.io/oauth/discord/callback
-export REDIRECT_URI=http://localhost:8080/account/connections
-export STRIPE_PUBLISHABLE_KEY=pk_test_1u5ImR375vh3iwVcWfdaPtJk
-export STRIPE_PRIVATE_KEY=sk_test_K3Ol21vL7fiVAUDcp8MnOAYT
-```
-### BETA (Heroku):
-```
-API_PORT=3000
-API_BASE_URL=https://ascend-api.herokuapp.com/
-MONGODB_URI=mongodb://ascend_root:<PASSWORD>@ds151048.mlab.com:51048/heroku_c41mdm0l
-DISCORD_CLIENT_ID=406318468703584266
-DISCORD_CLIENT_SECRET=Nu7ZKYZOijTlsdd6fZS1Iz3KGBBI8Vrk
-DISCORD_CALLBACK=https://ascend-api.herokuapp.com/oauth/discord/callback
-REDIRECT_URI=https://ascend-react.herokuapp.com/
-```
-### PRODUCTION:
-```
-API_PORT=3000
-API_BASE_URL=http://api.ascendtrading.net/
-MONGODB_URI=mongodb://ascend_root:<PASSWORD>@ds151048.mlab.com:51048/heroku_c41mdm0l
-DISCORD_CLIENT_ID=406318468703584266
-DISCORD_CLIENT_SECRET=<SECRET>
-DISCORD_CALLBACK=http://api.ascendtrading.net/oauth/discord/callback
-REDIRECT_URI=http://www.ascendtrading.net/
-STRIPE_PUBLIC_KEY=
-STRIPE_PRIVATE_KEY=<SECRET>
-```
 
 ## Stripe
 In order to connect this backend API to Stripe, you will need to create a webhook
