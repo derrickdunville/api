@@ -8,14 +8,16 @@ let express = require('express'),
     MONGODB_URI = 'mongodb://localhost/api',
     mongoose = require('mongoose'),
     bodyParser = require('body-parser'),
-    cookieParser = require('cookie-parser')
-    formidable = require('express-formidable')
+    cookieParser = require('cookie-parser'),
+    formidable = require('express-formidable'),
     cors = require('cors'),
 
     //Mongoose Models
     User = require('./api/models/userModel'),
+    Post = require('./api/models/postModel'),
     //Routes
     userRoutes = require('./api/routes/userRoutes'),
+    postRoutes = require('./api/routes/postRoutes')
 
 
 app.use(bodyParser.urlencoded({ extended: true }))
@@ -31,6 +33,7 @@ app.use(function(req, res, next) {
 app.use(cors())
 
 userRoutes(app)
+postRoutes(app)
 
 app.use('/', express.static('apidoc'))
 // catch 404 and forward to error handler

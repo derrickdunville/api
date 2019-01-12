@@ -7,13 +7,13 @@ let mongoose  = require('mongoose'),
 // look up the user with the jwt token and push the users role list
 // onto the request for authorization at the endpoint
 exports.ensureAuthorized = function(req, res, next) {
-    console.log('ensureAuthorized...');
+    // console.log('ensureAuthorized...');
     let bearerToken;
     let cookie = req.headers["cookie"];
     if (typeof req.cookies.cookie !== 'undefined' && req.cookies.cookie !== null) {
-      console.log("cookie is not undefined")
+      // console.log("cookie is not undefined")
         // console.log("cookies")
-        console.dir(req.cookies);
+        // console.dir(req.cookies);
         // let bearer = bearerHeader.split(" ");
         // bearerToken = bearer[1];
         // console.log("Sent Token: " + bearerToken);
