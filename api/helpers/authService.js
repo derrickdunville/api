@@ -33,7 +33,14 @@ exports.ensureAuthorized = function(req, res, next) {
             }
         });
     } else {
+      // attempting to logout with no cookie
+      if(req.url === '/logout'){
+        res.clearCookie("cookie")
+        res.redirect(302, "/")
+      } else {
         res.status(403).send({err: {message:"Authorization not provided"}});
+      }
+
     }
 }
 

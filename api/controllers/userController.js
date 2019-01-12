@@ -308,6 +308,7 @@ exports.createUser = function(req, res) {
     // Create a customer on stripe for the new user
 
     // check for a username, password, and email in the req body
+    console.log("createUser...")
     if(!req.body.username || !req.body.password || !req.body.email) {
       res.status(400).send({message: "Must provide username, password, and email"});
     } else {
@@ -318,6 +319,8 @@ exports.createUser = function(req, res) {
         email: req.body.email,
       });
       newUser.save().then(user => {
+        console.log("User created: ")
+        console.dir(user)
         res.status(201).send(user);
       }).catch(err => {
         console.dir(err)
